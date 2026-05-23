@@ -1,0 +1,16 @@
+fastapi
+uvicorn
+sqlmodel
+psycopg2-binary
+asyncpg
+greenlet
+passlib[argon2]
+python-jose[cryptography]
+pydantic[email]
+pydantic-settings
+pyyaml
+python-multipart
+alembic
+requests
+aiocache
+sentry-sdk[fastapi]

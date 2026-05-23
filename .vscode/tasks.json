@@ -1,0 +1,28 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "start-postgres",
+            "type": "shell",
+            "command": "docker run --rm -d -p 5432:5432 --name dev-postgres -e POSTGRES_PASSWORD=postgres postgres:16",
+            "problemMatcher": []
+        },
+        {
+            "label": "stop-postgres",
+            "type": "shell",
+            "command": "docker stop dev-postgres || true",
+            "problemMatcher": []
+        },
+        {
+            "label": "Docker Compose Up (Build)",
+            "type": "shell",
+            "command": "docker compose up --build; docker compose down -v",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+    ]
+}

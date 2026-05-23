@@ -1,0 +1,219 @@
+# Football Sweepstake
+
+A self-hosted football prediction webapp for competing with friends and colleagues. Create a tournament, invite others via a join link, submit your predictions, and watch the leaderboard update in real time as match results come in.
+
+## How does it work?
+
+Create a tournament or join one via an invite link. Make predictions on match scores, group winners, knockout stage winners, and the overall tournament winner. Points are awarded based on how accurate your predictions are — an exact score earns more than just getting the winner right. Each tournament's point values are fully configurable by its admin.
+
+**Features:**
+- Create a tournament or join one via a shareable invite link
+- Predict match scores, group winners, knockout stage winners, and the overall tournament winner
+- Configurable point system per tournament (exact score, correct winner, group winner, stage winner, tournament podium)
+- Import tournament fixtures and results automatically from [football-data.org](https://www.football-data.org/)
+- Leaderboard showing participants' current rankings and points breakdown
+- AI-assisted "lucky dip" — generate Poisson-model predictions with a single click
+- Fully responsive: iPhone portrait → 4K landscape
+- Light and dark mode (follows OS preference)
+- Optional email notifications via SMTP
+- Optional error monitoring via [Sentry](https://sentry.io/)
+
+**Point system (all values configurable per tournament):**
+
+| Prediction | Default points |
+|---|---|
+| Exact match score | 5 |
+| Correct match winner / draw | 3 |
+| Correct group winner | 8 |
+| Correct knockout stage winner | 10 |
+| Correct tournament winner | 25 |
+| Correct runner-up | 15 |
+| Correct third place | 0 |
+
+
+## Give it a quick try
+
+```sh
+docker run -p 80:80 \
+  -e SERVER_HTTPS_AUTH_ONLY=false \
+  -e SERVER_LOAD_TEST_DATA=true \
+  -e SERVER_DATABASE_URL=sqlite+aiosqlite:////tmp/sweepstake.db \
+  -e SERVER_SECRET_KEY=local-testing-only \
+  vanalmsick/sweepstake
+```
+
+> **Note:** SQLite is fine for a quick try. Use PostgreSQL for anything persistent.
+
+
+## Full Production Deployment
+
+**[docker-compose.yml](/docker-compose.yml)**
+
+```yaml
+services:
+
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: sweepstake
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d sweepstake"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  app:
+    image: vanalmsick/sweepstake
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - migrations_data:/app/data/db_migrations
+    environment:
+      SERVER_DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/sweepstake
+      SERVER_SECRET_KEY: change-me-to-a-long-random-string
+      SERVER_ROOT_PATH: /api
+      SERVER_HTTPS_AUTH_ONLY: "true"   # set to "false" if not behind TLS
+      GUNICORN_WORKERS: "3"            # rule of thumb: (2 × CPU cores) + 1
+
+      # Optional — remove lines you don't need
+      SERVER_SMTP_HOST: smtp.example.com
+      SERVER_SMTP_PORT: "587"
+      SERVER_SMTP_USERNAME: noreply@example.com
+      SERVER_SMTP_PASSWORD: your-smtp-password
+      SERVER_SMTP_FROM_EMAIL: noreply@example.com
+      FOOTBALL_DATA_ORG_API_KEY: ""
+      SENTRY_DSN: ""
+
+volumes:
+  postgres_data:
+  migrations_data:
+```
+
+```sh
+docker compose -f /path/to/docker-compose.yml up -d
+```
+
+### Environment variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `SERVER_SECRET_KEY` | *(dev placeholder)* | Secret used to sign JWT tokens. **Change this before deploying.** |
+| `SERVER_DATABASE_URL` | `postgresql+asyncpg://postgres:postgres@localhost:5432/sweepstake` | SQLAlchemy async database URL. |
+| `SERVER_HTTPS_AUTH_ONLY` | `true` | Adds the `Secure` flag to auth cookies. Set to `false` when testing over plain HTTP. |
+| `SERVER_ROOT_PATH` | `""` | FastAPI mount prefix. Set to `/api` when running behind nginx (as in the Docker image). |
+| `SERVER_PORT` | `8888` | Internal port gunicorn listens on (nginx proxies to this). |
+| `SERVER_DEBUG` | `false` | Enable FastAPI debug mode. |
+| `SERVER_LOAD_TEST_DATA` | `false` | Seed the database with sample data on startup. Useful for demos; do not use in production. |
+| `GUNICORN_WORKERS` | `2` | Number of gunicorn worker processes. Rule of thumb: `(2 × CPU cores) + 1`. |
+| `SERVER_ACCESS_TOKEN_EXPIRE_MINUTES` | `30` | JWT access token lifetime in minutes. |
+| `SERVER_REFRESH_TOKEN_EXPIRE_DAYS` | `7` | JWT refresh token lifetime in days. |
+| `SERVER_CORS_ORIGINS` | `["http://localhost:3000","http://localhost:5173"]` | Allowed CORS origins (JSON array or comma-separated). |
+| `SERVER_FRONTEND_URL` | `http://localhost:3000` | Base URL used to build links in emails. |
+| `SERVER_SMTP_HOST` | `""` | SMTP server hostname. Leave empty to disable emails. |
+| `SERVER_SMTP_PORT` | `587` | SMTP server port. |
+| `SERVER_SMTP_USERNAME` | `""` | SMTP username. |
+| `SERVER_SMTP_PASSWORD` | `""` | SMTP password. |
+| `SERVER_SMTP_FROM_EMAIL` | `noreply@example.com` | Sender address for outgoing emails. |
+| `FOOTBALL_DATA_ORG_API_KEY` | `""` | [football-data.org](https://www.football-data.org/) API key for importing fixtures and results. |
+| `FOOTBALL_DATA_ORG_API_TIER` | `TIER_ONE` | API tier for rate-limit handling (`TIER_ONE`–`TIER_FOUR`). |
+| `SENTRY_DSN` | `""` | [Sentry](https://sentry.io/) DSN for error monitoring (backend + frontend). Leave empty to disable. |
+
+
+## Do you want to help / contribute?
+
+### Code overview
+
+```
+sweepstake/
+├── backend/
+│   ├── src/
+│   │   ├── tournaments/       # Tournament CRUD, join codes, point config
+│   │   ├── matches/           # Match fixtures and results
+│   │   ├── groups_stages/     # Group and knockout stage management
+│   │   ├── predictions/       # Prediction storage and point calculation
+│   │   ├── teams/             # Team data
+│   │   ├── users/             # Auth, accounts, password reset, email
+│   │   ├── stats/             # Leaderboard and scoring aggregates
+│   │   └── api_football_data_org/  # football-data.org import scripts
+│   └── tests/
+├── frontend/
+│   └── src/
+│       ├── pages/             # HomePage, TournamentPage, PredictionsPage, LeaderboardPage
+│       ├── api/               # RTK Query endpoints per domain
+│       ├── types/             # TypeScript types mirroring backend schemas
+│       └── store/             # Redux store, auth slice, listener middleware
+├── data/
+│   ├── .env.example           # Copy to .env and fill in values
+│   └── db_migrations/         # Auto-generated Alembic migration files (gitignored)
+├── Dockerfile                 # Multi-stage build (Node → Python deps → runtime)
+├── docker-compose.yml
+├── nginx.conf                 # Serves SPA, proxies /api/ → gunicorn
+└── supervisord.conf           # Manages nginx + gunicorn inside the container
+```
+
+**Tech stack**
+- **Backend:** FastAPI · SQLModel · Alembic (auto-migrations on startup) · PostgreSQL
+- **Frontend:** React · TypeScript · Vite · Redux Toolkit · RTK Query · Tailwind CSS
+- **Deployment:** Single container — nginx serves the SPA and proxies `/api/` to gunicorn; supervisord manages both processes
+
+### Running locally for development
+
+#### Backend
+
+```sh
+# From the project root
+cp data/.env.example data/.env
+# Edit data/.env — at minimum set SERVER_HTTPS_AUTH_ONLY=false and point SERVER_DATABASE_URL to a local Postgres
+
+cd backend
+python -m uvicorn src.main:app --reload --port 8888
+# API docs: http://localhost:8888/docs
+```
+
+#### Frontend
+
+```sh
+cd frontend
+echo "VITE_API_BASE_URL=http://localhost:8888/" > .env.local
+npm install
+npm run dev
+# App: http://localhost:5173
+```
+
+#### Tests
+
+```sh
+cd backend
+pytest tests/
+```
+
+#### Importing fixtures from football-data.org
+
+1. Get a free API key at [football-data.org](https://www.football-data.org/)
+2. Set `FOOTBALL_DATA_ORG_API_KEY` in `data/.env`
+3. Use the admin endpoints at `GET /api/football-data-org/tournaments` to list available competitions, then `POST /api/football-data-org/import/{id}` to import one
+
+
+### ToDos:
+- Add automated emails
+- Add change password page
+- Add reset password email
+- Add admin transparency logs
+
+---
+
+<div align="center">
+
+If you like <b>Football Sweepstake</b>, consider giving it a **star** ⭐!  
+Made with ❤️ in London
+
+</div>

@@ -1,0 +1,111 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+
+        {
+            "name": "Debugger FastAPI",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "uvicorn",
+            "args": [
+                "src.main:app",
+                "--reload",
+                "--port", "8888"
+            ],
+            "cwd": "${workspaceFolder}/backend",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/backend",
+                "SERVER_HTTPS_AUTH_ONLY": "false"
+            },
+            "jinja": true,
+            "preLaunchTask": "start-postgres",
+            "postDebugTask": "stop-postgres"
+        },
+
+        {
+            "name": "Run FastAPI",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/backend/src/main.py",
+            "cwd": "${workspaceFolder}/backend",
+            "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/backend",
+                "SERVER_HTTPS_AUTH_ONLY": "false"
+            },
+            "preLaunchTask": "start-postgres",
+            "postDebugTask": "stop-postgres"
+        },
+
+        {
+            "name": "Debugger FastAPI - Load Test Data",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "uvicorn",
+            "args": [
+                "src.main:app",
+                "--reload",
+                "--port", "8888"
+            ],
+            "cwd": "${workspaceFolder}/backend",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/backend",
+                "SERVER_LOAD_TEST_DATA": "true",
+                "SERVER_HTTPS_AUTH_ONLY": "false"
+            },
+            "jinja": true,
+            "preLaunchTask": "start-postgres",
+            "postDebugTask": "stop-postgres"
+        },
+
+        {
+            "name": "Run All Tests",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "args": ["tests/", "-v", "--no-header"],
+            "cwd": "${workspaceFolder}/backend",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/backend"
+            }
+        },
+
+        {
+            "name": "Run Import Tournament",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/backend/src/api_football_data_org/import_tournament.py",
+            "cwd": "${workspaceFolder}/backend",
+            "console": "integratedTerminal",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/backend"
+            }
+        },
+
+        {
+            "name": "Run React Frontend",
+            "type": "node",
+            "request": "launch",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": ["run", "dev"],
+            "cwd": "${workspaceFolder}/frontend",
+            "console": "integratedTerminal",
+            "serverReadyAction": {
+                "pattern": "Local:.*http://localhost:(\\d+)",
+                "uriFormat": "http://localhost:%s",
+                "action": "openExternally"
+            }
+        },
+
+        {
+            "name": "Build & Run Docker Container",
+            "type": "node",       // or python, go, etc.
+            "request": "attach",
+            "port": 9229,
+            "preLaunchTask": "Docker Compose Up (Build)",
+        },
+
+    ]
+}

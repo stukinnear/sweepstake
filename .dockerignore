@@ -1,0 +1,37 @@
+# Version control
+.git/
+.gitignore
+
+# Editor / IDE
+.vscode/
+.idea/
+
+# Python
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+.venv/
+
+# Frontend dev dependencies — symlinked on iCloud Drive (macOS)
+frontend/node_modules.nosync/
+frontend/node_modules/
+
+# Tests
+backend/tests/
+
+# Environment files (keep .env.example for reference)
+.env
+.env.*
+!.env.example
+
+# Frontend build output (rebuilt inside Docker)
+frontend/dist/
+
+# Auto-generated Alembic migration files — these are generated at container
+# startup and stored in a persistent Docker volume (migrations_data).
+# Baking them into the image causes stale-revision chain errors on rebuild.
+data/db_migrations/*.py
+
+# macOS
+.DS_Store
+**/.DS_Store

@@ -1,0 +1,38 @@
+# Application settings
+# Priority (highest to lowest): env vars > .env / .env.local > this file
+# Env var names use the SERVER_ prefix, e.g. SERVER_PORT=9000
+
+port: 8888
+debug: false
+secret_key: "dev-secret-key-for-testing-change-in-production"
+database_url: "postgresql+asyncpg://postgres:postgres@localhost:5432/sweepstake"
+
+access_token_expire_minutes: 30
+refresh_token_expire_days: 7
+password_reset_expire_minutes: 30
+
+cors_origins:
+  - "http://localhost:3000"
+  - "http://localhost:5173"
+
+db_pool_size: 5
+db_max_overflow: 10
+db_pool_recycle: 3600
+
+frontend_url: "http://localhost:3000"
+
+smtp_host: ""
+smtp_port: 587
+smtp_username: ""
+smtp_password: ""
+smtp_from_email: "noreply@example.com"
+
+# Note: env var for this field is FOOTBALL_DATA_ORG_API_KEY (no SERVER_ prefix)
+football_data_org_api_key: ""
+
+load_test_data: false
+root_path: ""
+https_auth_only: true
+
+# Note: env var for this field is SENTRY_DSN or SERVER_SENTRY_DSN (no value = disabled)
+sentry_dsn: ""
