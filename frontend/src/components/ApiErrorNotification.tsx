@@ -3,7 +3,7 @@ import { AlertTriangle, RefreshCw, X } from 'lucide-react'
 import { useAppDispatch, useAppSelector } from '../store/hooks'
 import { dismissApiError } from '../store/apiErrorSlice'
 
-const AUTO_DISMISS_MS = 6000
+const AUTO_DISMISS_MS = 8000
 
 function ErrorToast({ id, message, status }: { id: string; message: string; status: number | string }) {
   const dispatch = useAppDispatch()

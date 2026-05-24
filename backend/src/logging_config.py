@@ -1,6 +1,12 @@
 import logging
 from http import HTTPStatus
 
+try:
+    from sentry_sdk.integrations.logging import BreadcrumbHandler, EventHandler as SentryEventHandler
+    _SENTRY_LOGGING_AVAILABLE = True
+except ImportError:
+    _SENTRY_LOGGING_AVAILABLE = False
+
 # ANSI color codes
 RESET = "\033[0m"
 GREEN = "\033[32m"
@@ -52,6 +58,9 @@ def get_logger(name: str) -> logging.Logger:
             datefmt="%Y-%m-%dT%H:%M:%S",
         ))
         logger.addHandler(handler)
+        if _SENTRY_LOGGING_AVAILABLE:
+            logger.addHandler(BreadcrumbHandler(level=logging.DEBUG))
+            logger.addHandler(SentryEventHandler(level=logging.WARNING))
         logger.propagate = False
     return logger
 

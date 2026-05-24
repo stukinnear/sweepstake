@@ -421,6 +421,7 @@ export function PredictionsPage() {
   const [upsertStagePred] = useUpsertStagePredictionMutation()
   const [upsertMatchPred] = useUpsertMatchPredictionMutation()
   const [, setRenderTick] = useState(0)
+  const [isGeneratingRandom, setIsGeneratingRandom] = useState(false)
 
   useEffect(() => {
     if (!matches) return
@@ -470,13 +471,18 @@ export function PredictionsPage() {
   async function handleGenerateRandomScores() {
     const now = new Date()
     const upcoming = (matches ?? []).filter((m) => new Date(m.start_datetime) > now)
-    await Promise.all(
-      upcoming.map((match) => {
+    setIsGeneratingRandom(true)
+    try {
+      for (const match of upcoming) {
         const { home, away } = generateScore()
-        return upsertMatchPred({ match_id: match.id, home_score: home, away_score: away, tournamentId })
-      })
-    )
-    refetchMatchPredictions()
+        await upsertMatchPred({ match_id: match.id, home_score: home, away_score: away, tournamentId })
+        // Small delay to avoid overwhelming the api server - i.e. 100 requests would take ~6.6 seconds 
+        await new Promise((r) => setTimeout(r, 66))
+      }
+    } finally {
+      setIsGeneratingRandom(false)
+      refetchMatchPredictions()
+    }
   }
 
   const predictionMap = new Map((matchPredictions ?? []).map((p) => [p.match_id, p]))
@@ -696,10 +702,11 @@ export function PredictionsPage() {
               {isViewingOwn && (
                 <button
                   onClick={handleGenerateRandomScores}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-gray-300 dark:border-gray-600 px-3 py-1 text-xs font-medium text-gray-600 dark:text-gray-300 hover:border-blue-400 hover:text-blue-600 dark:hover:border-blue-500 dark:hover:text-blue-400 transition"
+                  disabled={isGeneratingRandom}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-gray-300 dark:border-gray-600 px-3 py-1 text-xs font-medium text-gray-600 dark:text-gray-300 hover:border-blue-400 hover:text-blue-600 dark:hover:border-blue-500 dark:hover:text-blue-400 transition disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  <Dices size={13} />
-                  Random scores
+                  <Dices size={13} className={isGeneratingRandom ? 'animate-spin' : ''} />
+                  {isGeneratingRandom ? 'Generating…' : 'Random scores'}
                 </button>
               )}
             </div>

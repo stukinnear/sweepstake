@@ -49,8 +49,8 @@ class Settings(BaseSettings):
     refresh_token_expire_days: int = 7
     password_reset_expire_minutes: int = 30
     cors_origins: list[str] = ["http://localhost:3000", "http://localhost:5173"]
-    db_pool_size: int = 5
-    db_max_overflow: int = 10
+    db_pool_size: int = 10
+    db_max_overflow: int = 20
     db_pool_recycle: int = 3600
     frontend_url: str = "http://localhost:3000"
     smtp_host: str = ""
