@@ -383,6 +383,7 @@ export function TournamentPage() {
                           <img
                             src={match.home_team.image_url}
                             alt={match.home_team.name}
+                            decoding="async"
                             className="h-7 w-7 flex-shrink-0 rounded-full object-cover border border-gray-200 dark:border-gray-700"
                           />
                         ) : (
@@ -409,6 +410,7 @@ export function TournamentPage() {
                           <img
                             src={match.away_team.image_url}
                             alt={match.away_team.name}
+                            decoding="async"
                             className="h-7 w-7 flex-shrink-0 rounded-full object-cover border border-gray-200 dark:border-gray-700"
                           />
                         ) : (

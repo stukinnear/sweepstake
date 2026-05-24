@@ -1,16 +1,25 @@
-import { useEffect, useRef } from 'react'
+import { lazy, Suspense, useEffect, useRef } from 'react'
 import { Routes, Route, Navigate, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useAppSelector } from './store/hooks'
 import { useGetMeQuery } from './api/authApi'
 import { useListTournamentsQuery } from './api/tournamentApi'
-import { LoginPage } from './pages/LoginPage'
-import { RegisterPage } from './pages/RegisterPage'
-import { HomePage } from './pages/HomePage'
-import { OverviewPage } from './pages/OverviewPage'
-import { TournamentPage } from './pages/TournamentPage'
-import { PredictionsPage } from './pages/PredictionsPage'
-import { LeaderboardPage } from './pages/LeaderboardPage'
 import { BugReportButton } from './components/BugReportButton'
+
+const LoginPage = lazy(() => import('./pages/LoginPage').then((m) => ({ default: m.LoginPage })))
+const RegisterPage = lazy(() => import('./pages/RegisterPage').then((m) => ({ default: m.RegisterPage })))
+const HomePage = lazy(() => import('./pages/HomePage').then((m) => ({ default: m.HomePage })))
+const OverviewPage = lazy(() => import('./pages/OverviewPage').then((m) => ({ default: m.OverviewPage })))
+const TournamentPage = lazy(() => import('./pages/TournamentPage').then((m) => ({ default: m.TournamentPage })))
+const PredictionsPage = lazy(() => import('./pages/PredictionsPage').then((m) => ({ default: m.PredictionsPage })))
+const LeaderboardPage = lazy(() => import('./pages/LeaderboardPage').then((m) => ({ default: m.LeaderboardPage })))
+
+function PageFallback() {
+  return (
+    <div className="flex h-screen items-center justify-center bg-gray-900">
+      <span className="text-gray-400">Loading…</span>
+    </div>
+  )
+}
 
 /** Redirects already-authenticated users away from guest-only pages (e.g. /login, /register). */
 function GuestRoute() {
@@ -94,28 +103,30 @@ export default function App() {
     <>
     <AuthRedirect />
     <BugReportButton />
-    <Routes>
-      {/* Public routes */}
-      <Route path="/" element={<HomePage />} />
+    <Suspense fallback={<PageFallback />}>
+      <Routes>
+        {/* Public routes */}
+        <Route path="/" element={<HomePage />} />
 
-      {/* Redirects to /overview if already logged in */}
-      <Route element={<GuestRoute />}>
-        <Route path="/login" element={<LoginPage />} />
-      </Route>
-      <Route path="/register" element={<RegisterPage />} />
+        {/* Redirects to /overview if already logged in */}
+        <Route element={<GuestRoute />}>
+          <Route path="/login" element={<LoginPage />} />
+        </Route>
+        <Route path="/register" element={<RegisterPage />} />
 
-      {/* Protected routes — require an active session */}
-      <Route element={<ProtectedRoute />}>
-        <Route path="/overview" element={<OverviewPage />} />
-        <Route path="/tournament/:id" element={<TournamentPage />} />
-        <Route path="/tournament/:id/leaderboard" element={<LeaderboardPage />} />
-        <Route path="/tournament/:id/predictions" element={<PredictionsPage />} />
-        <Route path="/tournament/:id/predictions/:userId" element={<PredictionsPage />} />
-      </Route>
+        {/* Protected routes — require an active session */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/overview" element={<OverviewPage />} />
+          <Route path="/tournament/:id" element={<TournamentPage />} />
+          <Route path="/tournament/:id/leaderboard" element={<LeaderboardPage />} />
+          <Route path="/tournament/:id/predictions" element={<PredictionsPage />} />
+          <Route path="/tournament/:id/predictions/:userId" element={<PredictionsPage />} />
+        </Route>
 
-      {/* Catch-all */}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        {/* Catch-all */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Suspense>
     </>
   )
 }

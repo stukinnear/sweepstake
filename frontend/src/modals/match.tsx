@@ -86,6 +86,7 @@ function TeamSelector({
             <img
               src={team.image_url}
               alt={team.name}
+              decoding="async"
               className="h-5 w-5 flex-shrink-0 rounded-full object-cover border border-gray-200 dark:border-gray-700"
             />
           ) : (

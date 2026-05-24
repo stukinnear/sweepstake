@@ -40,6 +40,7 @@ function WinnerPredictionsTable({
               <img
                 src={group.image_url}
                 alt={group.name ?? ''}
+                decoding="async"
                 className="h-5 w-5 flex-shrink-0 rounded-full object-cover border border-gray-200 dark:border-gray-700"
               />
             ) : (
@@ -101,6 +102,7 @@ function WinnerBadge({ team }: { team: { name: string; image_url: string | null 
             <img
               src={team.image_url}
               alt={team.name}
+              decoding="async"
               className="h-7 w-7 rounded-full object-cover border border-gray-200 dark:border-gray-700"
             />
           )}
@@ -221,6 +223,7 @@ export function TournamentStatsModal({
               <img
                 src={team.image_url}
                 alt={team.name}
+                decoding="async"
                 className={`${imgSize} rounded-full object-cover border border-gray-200 dark:border-gray-700`}
               />
             )}

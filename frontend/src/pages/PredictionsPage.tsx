@@ -137,7 +137,7 @@ function TeamSelect({
               : 'border-dashed border-amber-300/60 dark:border-amber-700/40 bg-amber-100/40 dark:bg-amber-900/10'
           }`}>
             {selectedTeam?.image_url ? (
-              <img src={selectedTeam.image_url} alt={selectedTeam.name} className="h-full w-full object-cover" />
+              <img src={selectedTeam.image_url} alt={selectedTeam.name} decoding="async" className="h-full w-full object-cover" />
             ) : (
               <span className="text-2xl opacity-20">🏆</span>
             )}
@@ -173,7 +173,7 @@ function TeamSelect({
                   <div key={place} className="flex items-center gap-1">
                     <span className="text-xs italic text-amber-700/40 dark:text-amber-400/40 whitespace-nowrap">{place}</span>
                     {team.image_url && (
-                      <img src={team.image_url} alt={team.name} className="h-3.5 w-3.5 rounded-full object-cover border border-amber-200 dark:border-amber-700/60 flex-shrink-0" />
+                      <img src={team.image_url} alt={team.name} decoding="async" className="h-3.5 w-3.5 rounded-full object-cover border border-amber-200 dark:border-amber-700/60 flex-shrink-0" />
                     )}
                     <span className="text-xs italic text-amber-700/50 dark:text-amber-400/50 whitespace-nowrap">{team.name}</span>
                   </div>
@@ -208,7 +208,7 @@ function TeamSelect({
           {winnerTeam && (
             <div className="flex items-center gap-1">
               {winnerTeam.image_url && (
-                <img src={winnerTeam.image_url} alt={winnerTeam.name} className="h-3.5 w-3.5 rounded-full object-cover border border-gray-200 dark:border-gray-600 flex-shrink-0" />
+                <img src={winnerTeam.image_url} alt={winnerTeam.name} decoding="async" className="h-3.5 w-3.5 rounded-full object-cover border border-gray-200 dark:border-gray-600 flex-shrink-0" />
               )}
               <span className="text-xs italic text-gray-400 dark:text-gray-500 whitespace-nowrap">{winnerTeam.iso_code ?? winnerTeam.name}</span>
             </div>
@@ -241,7 +241,7 @@ function TeamSelect({
           <div className="flex items-center gap-2.5">
             {selectedTeam?.image_url ? (
               <img src={selectedTeam.image_url} alt={selectedTeam.name}
-                className="h-8 w-8 flex-shrink-0 rounded-full object-cover border border-gray-200 dark:border-gray-600" />
+                decoding="async" className="h-8 w-8 flex-shrink-0 rounded-full object-cover border border-gray-200 dark:border-gray-600" />
             ) : (
               <span className="h-8 w-8 flex-shrink-0 rounded-full bg-gray-100 dark:bg-gray-700 border border-dashed border-gray-300 dark:border-gray-600 inline-block" />
             )}
@@ -256,7 +256,7 @@ function TeamSelect({
             <div className="flex items-center gap-2">
               {selectedTeam?.image_url ? (
                 <img src={selectedTeam.image_url} alt={selectedTeam.name}
-                  className="h-7 w-7 flex-shrink-0 rounded-full object-cover border border-gray-200 dark:border-gray-600" />
+                  decoding="async" className="h-7 w-7 flex-shrink-0 rounded-full object-cover border border-gray-200 dark:border-gray-600" />
               ) : (
                 <span className="h-7 w-7 flex-shrink-0 rounded-full bg-gray-100 dark:bg-gray-700 border border-dashed border-gray-200 dark:border-gray-600 inline-block" />
               )}
@@ -781,7 +781,7 @@ export function PredictionsPage() {
                             </span>
                             {match.home_team?.image_url ? (
                               <img src={match.home_team.image_url} alt={match.home_team.name}
-                                className="h-7 w-7 flex-shrink-0 rounded-full object-cover border border-gray-200 dark:border-gray-700" />
+                                decoding="async" className="h-7 w-7 flex-shrink-0 rounded-full object-cover border border-gray-200 dark:border-gray-700" />
                             ) : (
                               <span className="h-7 w-7 flex-shrink-0 rounded-full bg-gray-200 dark:bg-gray-700 inline-block" />
                             )}
@@ -800,7 +800,7 @@ export function PredictionsPage() {
                           <div className="row-start-2 col-start-3 sm:row-auto sm:col-auto flex items-center justify-start gap-2 px-2">
                             {match.away_team?.image_url ? (
                               <img src={match.away_team.image_url} alt={match.away_team.name}
-                                className="h-7 w-7 flex-shrink-0 rounded-full object-cover border border-gray-200 dark:border-gray-700" />
+                                decoding="async" className="h-7 w-7 flex-shrink-0 rounded-full object-cover border border-gray-200 dark:border-gray-700" />
                             ) : (
                               <span className="h-7 w-7 flex-shrink-0 rounded-full bg-gray-200 dark:bg-gray-700 inline-block" />
                             )}

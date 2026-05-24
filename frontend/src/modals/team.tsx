@@ -397,6 +397,7 @@ export function TeamPickerModal({
                             <img
                               src={t.image_url}
                               alt={t.name}
+                              decoding="async"
                               className="h-7 w-7 flex-shrink-0 rounded-full object-cover border border-gray-200 dark:border-gray-700"
                             />
                           ) : (
