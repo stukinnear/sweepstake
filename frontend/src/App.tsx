@@ -24,12 +24,18 @@ function PageFallback() {
   )
 }
 
+function isLoginValid(): boolean {
+  const expiry = localStorage.getItem('loginExpiry')
+  if (!expiry) return false
+  return new Date(expiry) > new Date()
+}
+
 /** Redirects already-authenticated users away from guest-only pages (e.g. /login, /register). */
 function GuestRoute() {
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated)
   const bootstrapped = useAppSelector((state) => state.auth.bootstrapped)
   const location = useLocation()
-  const { isLoading } = useGetMeQuery(undefined, { skip: bootstrapped })
+  const { isLoading } = useGetMeQuery(undefined, { skip: bootstrapped || !isLoginValid() })
 
   if (isLoading) {
     return (
@@ -57,7 +63,7 @@ function ProtectedRoute() {
   const location = useLocation()
   // Skip getMe once we know the user is not authenticated — prevents spurious
   // re-fetches (and the resulting 401 + refresh attempt) after logout.
-  const { isLoading } = useGetMeQuery(undefined, { skip: bootstrapped && !isAuthenticated })
+  const { isLoading } = useGetMeQuery(undefined, { skip: (bootstrapped && !isAuthenticated) || !isLoginValid() })
   useListTournamentsQuery(undefined, { skip: !isAuthenticated })
   const wasAuthenticated = useRef(false)
 

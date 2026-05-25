@@ -9,6 +9,12 @@ import type {
   ResetPasswordRequest,
 } from '../types'
 
+function setLoginExpiry() {
+  const expiry = new Date()
+  expiry.setDate(expiry.getDate() + 7)
+  localStorage.setItem('loginExpiry', expiry.toISOString())
+}
+
 export const authApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
     getMe: build.query<User, void>({
@@ -24,20 +30,32 @@ export const authApi = baseApi.injectEndpoints({
     login: build.mutation<User, LoginRequest>({
       query: (body) => ({ url: '/auth/login', method: 'POST', body }),
       invalidatesTags: ['Me'],
+      onQueryStarted: async (_, { queryFulfilled }) => {
+        try { await queryFulfilled; setLoginExpiry() } catch {}
+      },
     }),
 
     register: build.mutation<User, RegisterRequest>({
       query: (body) => ({ url: '/auth/register', method: 'POST', body }),
       invalidatesTags: ['Me'],
+      onQueryStarted: async (_, { queryFulfilled }) => {
+        try { await queryFulfilled; setLoginExpiry() } catch {}
+      },
     }),
 
     logout: build.mutation<void, void>({
       query: () => ({ url: '/auth/logout', method: 'POST' }),
       invalidatesTags: ['Me'],
+      onQueryStarted: async (_, { queryFulfilled }) => {
+        try { await queryFulfilled; localStorage.removeItem('loginExpiry') } catch {}
+      },
     }),
 
     refresh: build.mutation<void, void>({
       query: () => ({ url: '/auth/refresh', method: 'POST' }),
+      onQueryStarted: async (_, { queryFulfilled }) => {
+        try { await queryFulfilled; setLoginExpiry() } catch {}
+      },
     }),
 
     changePassword: build.mutation<void, ChangePasswordRequest>({
