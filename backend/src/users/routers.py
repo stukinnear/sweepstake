@@ -153,7 +153,7 @@ async def register(
         secure=settings.https_auth_only,
         httponly=True,
         samesite="strict",
-        path=f"{settings.root_path}/auth/refresh",
+        path="/api/auth/refresh",
     )
     logger.info(f"User {user.id} registered and logged in, session {session_id}")
     return models.TokenResponse(
@@ -207,7 +207,7 @@ async def login(
         secure=settings.https_auth_only,
         httponly=True,
         samesite="strict",
-        path=f"{settings.root_path}/auth/refresh",
+        path="/api/auth/refresh",
     )
     logger.info(f"User {user.id} logged in, session {session_id}")
     return models.TokenResponse(
@@ -264,7 +264,7 @@ async def refresh_token(
             secure=settings.https_auth_only,
             httponly=True,
             samesite="strict",
-            path=f"{settings.root_path}/auth/refresh",
+            path="/api/auth/refresh",
         )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -302,7 +302,7 @@ async def refresh_token(
         secure=settings.https_auth_only,
         httponly=True,
         samesite="strict",
-        path=f"{settings.root_path}/auth/refresh",
+        path="/api/auth/refresh",
     )
     logger.info(f"User {user.id} refreshed session {session_id} -> {new_session_id}")
     return models.TokenResponse(
@@ -351,7 +351,7 @@ async def logout(
         secure=settings.https_auth_only,
         httponly=True,
         samesite="strict",
-        path=f"{settings.root_path}/auth/refresh",
+        path="/api/auth/refresh",
     )
     return {"message": "Logged out successfully"}
 
