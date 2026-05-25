@@ -6,6 +6,7 @@ import { useGetMeQuery } from './api/authApi'
 import { useListTournamentsQuery } from './api/tournamentApi'
 import { BugReportButton } from './components/BugReportButton'
 import { ApiErrorNotification } from './components/ApiErrorNotification'
+import { GuideModalController } from './modals/guide'
 
 const LoginPage = lazy(() => import('./pages/LoginPage').then((m) => ({ default: m.LoginPage })))
 const RegisterPage = lazy(() => import('./pages/RegisterPage').then((m) => ({ default: m.RegisterPage })))
@@ -115,6 +116,7 @@ export default function App() {
     <SentryUserSync />
     <BugReportButton />
     <ApiErrorNotification />
+    <GuideModalController />
     <Suspense fallback={<PageFallback />}>
       <Routes>
         {/* Public routes */}

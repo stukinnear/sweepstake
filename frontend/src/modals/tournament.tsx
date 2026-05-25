@@ -210,7 +210,7 @@ function TournamentInfoFields({
         />
       </div>
       <div>
-        <FieldLabel>Stake / Prize</FieldLabel>
+        <FieldLabel>Stake / Prize <i>(empty if no entry stake)</i></FieldLabel>
         <textarea
           value={stake}
           onChange={(e) => setStake(e.target.value)}
@@ -221,7 +221,7 @@ function TournamentInfoFields({
         />
       </div>
       <div>
-        <FieldLabel>Football-data.org tournament</FieldLabel>
+        <FieldLabel>Football-data.org tournament <i>(recommended)</i></FieldLabel>
         {fdoLoading ? (
           <div className={`${fieldClass} flex items-center gap-2 text-gray-400 dark:text-gray-500`}>
             <Loader2 className="animate-spin h-4 w-4 flex-shrink-0" />
@@ -284,7 +284,7 @@ export function CreateTournamentModal({ onClose }: { onClose: () => void }) {
         stage_winner_points: stageWinnerPoints !== '' ? Number(stageWinnerPoints) : undefined,
       }).unwrap()
       onClose()
-      navigate(`/tournament/${tournament.id}`)
+      navigate(`/tournament/${tournament.id}?guide=admin`)
     } catch {
       setError('Failed to create tournament. Please try again.')
     }
@@ -588,6 +588,7 @@ export function EditTournamentModal({
               )
             })}
           </ul>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-3"><b>Note:</b> 💲 user paid stake; 👑 promote to admin; ❌ remove from competition.</p>
           <ErrorMsg msg={memberError} />
         </div>
         <ErrorMsg msg={error} />

@@ -47,7 +47,7 @@ export function LoginForm() {
         cutoff.setDate(cutoff.getDate() + 5)
         return today <= cutoff
       })
-      navigate(active.length === 1 ? `/tournament/${active[0].id}` : '/overview')
+      navigate(active.length === 1 ? `/tournament/${active[0].id}${config?.demo_mode ? '?guide=admin' : ''}` : '/overview')
     } catch {
       // error shown below
     }

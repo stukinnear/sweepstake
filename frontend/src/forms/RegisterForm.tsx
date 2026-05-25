@@ -49,7 +49,7 @@ export function RegisterForm() {
     if (!emailMatch || !passwordMatch) return
     try {
       await register(form).unwrap()
-      navigate('/overview')
+      navigate(`/overview${search}`)
     } catch {
       // error shown below
     }

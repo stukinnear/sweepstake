@@ -703,10 +703,13 @@ export function PredictionsPage() {
                 <button
                   onClick={handleGenerateRandomScores}
                   disabled={isGeneratingRandom}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-gray-300 dark:border-gray-600 px-3 py-1 text-xs font-medium text-gray-600 dark:text-gray-300 hover:border-blue-400 hover:text-blue-600 dark:hover:border-blue-500 dark:hover:text-blue-400 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3 py-1 text-xs font-medium text-gray-600 dark:text-gray-300 hover:border-blue-400 hover:text-blue-600 dark:hover:border-blue-500 dark:hover:text-blue-400 transition disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   <Dices size={13} className={isGeneratingRandom ? 'animate-spin' : ''} />
-                  {isGeneratingRandom ? 'Generating…' : 'Random scores'}
+                  <span className="relative">
+                    <span className={isGeneratingRandom ? 'invisible' : undefined}>Random scores</span>
+                    {isGeneratingRandom && <span className="absolute inset-0 flex items-center">Generating…</span>}
+                  </span>
                 </button>
               )}
             </div>
@@ -799,7 +802,7 @@ export function PredictionsPage() {
                               matchId={match.id}
                               prediction={predictionMap.get(match.id)}
                               isOwn={isEditable}
-                              disabled={matchDisabled}
+                              disabled={matchDisabled || isGeneratingRandom}
                               userId={adminEditingOther ? targetUserId : undefined}
                               tournamentId={tournamentId}
                               onBeforeSave={adminEditingOther ? confirmAdminEdit : undefined}

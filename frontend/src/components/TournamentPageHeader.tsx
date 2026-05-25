@@ -3,7 +3,7 @@ import { NavLink, Link } from 'react-router-dom'
 import { AlertCircle, CheckCircle } from 'lucide-react'
 import type { Tournament } from '../types/tournament'
 
-function StakeText({ text }: { text: string }) {
+export function StakeText({ text }: { text: string }) {
   const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/g
   const parts = text.split(urlRegex)
   return (

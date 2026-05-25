@@ -122,7 +122,7 @@ export function JoinTournamentModal({ onClose, initialCode }: { onClose: () => v
     try {
       const tournament = await joinTournament(joinCode.trim()).unwrap()
       onClose()
-      navigate(`/tournament/${tournament.id}`)
+      navigate(`/tournament/${tournament.id}?guide=participant`)
     } catch {
       setError('Invalid join code or you are already a member.')
     }
