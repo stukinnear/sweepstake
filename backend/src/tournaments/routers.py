@@ -10,6 +10,8 @@ from src.exceptions import CustomError
 from src.utils import stream_model_results, create_stream_response
 from src.tournaments import crud, models
 from src.users.routers import verify_access_token
+from src.users.crud import get_user_by_id
+from src.emails.welcome_email import send_competition_welcome_email
 
 router = APIRouter(prefix="/tournament", tags=["tournament"])
 
@@ -17,6 +19,7 @@ router = APIRouter(prefix="/tournament", tags=["tournament"])
 @router.post("", response_model=models.TournamentRead, status_code=status.HTTP_201_CREATED)
 async def create_tournament_endpoint(
     tournament: models.TournamentCreate,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
     token_payload: dict = Depends(verify_access_token),
 ):
@@ -37,9 +40,34 @@ async def create_tournament_endpoint(
     - **group_winner_points**: Points for correctly predicting the winner of a group (default: null/disabled)
     - **stage_winner_points**: Points for correctly predicting the winner of a knockout stage (default: null/disabled)
 
-    Returns the created tournament with its ID.
+    Returns the created tournament with its ID.  A welcome email is dispatched to the creator in the background.
     """
-    return await crud.create_tournament(db, tournament, user_id=token_payload["uid"])
+    user_id = token_payload["uid"]
+    new_tournament = await crud.create_tournament(db, tournament, user_id=user_id)
+    user = await get_user_by_id(db, user_id)
+    if user:
+        admins = [
+            {"first_name": a.first_name, "last_name": a.last_name, "email": a.email}
+            for a in new_tournament.admins
+        ]
+        background_tasks.add_task(
+            send_competition_welcome_email,
+            to_email=user.email,
+            first_name=user.first_name,
+            tournament_name=new_tournament.name,
+            tournament_id=new_tournament.id,
+            stake=new_tournament.stake,
+            match_winner_points=new_tournament.match_winner_points,
+            match_score_points=new_tournament.match_score_points,
+            group_winner_points=new_tournament.group_winner_points,
+            stage_winner_points=new_tournament.stage_winner_points,
+            first_place_points=new_tournament.first_place_points,
+            second_place_points=new_tournament.second_place_points,
+            third_place_points=new_tournament.third_place_points,
+            admins=admins,
+            user_id=user_id,
+        )
+    return new_tournament
 
 
 @router.get("", response_model=list[models.TournamentRead])
@@ -210,6 +238,7 @@ async def set_stake_paid_endpoint(
 
 @router.post("/join/{join_code}", response_model=models.TournamentRead)
 async def join_tournament_endpoint(
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
     join_code: str = Path(..., description="Unique tournament join code"),
     token_payload: dict = Depends(verify_access_token),
@@ -219,9 +248,35 @@ async def join_tournament_endpoint(
 
     - **join_code**: Join code shared by organiser or member to join an existing competition
 
-    Returns the joined tournament.
+    Returns the joined tournament.  A welcome email is dispatched in the background.
     """
-    return await crud.join_tournament(db, tournament_join_code=join_code, user_id=token_payload["uid"])
+    user_id = token_payload["uid"]
+    tournament = await crud.join_tournament(db, tournament_join_code=join_code, user_id=user_id)
+    if tournament:
+        user = await get_user_by_id(db, user_id)
+        if user:
+            admins = [
+                {"first_name": a.first_name, "last_name": a.last_name, "email": a.email}
+                for a in tournament.admins
+            ]
+            background_tasks.add_task(
+                send_competition_welcome_email,
+                to_email=user.email,
+                first_name=user.first_name,
+                tournament_name=tournament.name,
+                tournament_id=tournament.id,
+                stake=tournament.stake,
+                match_winner_points=tournament.match_winner_points,
+                match_score_points=tournament.match_score_points,
+                group_winner_points=tournament.group_winner_points,
+                stage_winner_points=tournament.stage_winner_points,
+                first_place_points=tournament.first_place_points,
+                second_place_points=tournament.second_place_points,
+                third_place_points=tournament.third_place_points,
+                admins=admins,
+                user_id=user_id,
+            )
+    return tournament
 
 
 @router.delete("/leave/{tournament_id}", status_code=status.HTTP_204_NO_CONTENT)

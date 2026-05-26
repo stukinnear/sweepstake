@@ -64,6 +64,18 @@ export function Footer() {
                 </a>
                 .
               </li>
+              <li>
+                Logo free to use from{' '}
+                <a
+                  href="https://www.svgrepo.com/svg/390331/football-ball-soccer"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  svgrepo.com
+                </a>
+                .
+              </li>
               <li>Team images from football-data.org.</li>
               <li>
                 Tailwind CSS design elements with icons from{' '}

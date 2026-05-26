@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="x-apple-disable-message-reformatting">
+  <title>{% block title %}SweepStake{% endblock %}</title>
+  <!--[if mso]>
+  <noscript>
+    <xml>
+      <o:OfficeDocumentSettings>
+        <o:PixelsPerInch>96</o:PixelsPerInch>
+      </o:OfficeDocumentSettings>
+    </xml>
+  </noscript>
+  <![endif]-->
+  <style type="text/css">
+    /* Client resets */
+    body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
+    /* Base */
+    body { margin: 0 !important; padding: 0 !important; background-color: #f3f4f6; width: 100% !important; }
+    /* Mobile */
+    @media only screen and (max-width: 640px) {
+      .card-table  { width: 100% !important; }
+      .outer-cell  { padding: 16px 8px !important; }
+      .body-cell   { padding: 28px 20px !important; }
+      .footer-cell { padding: 16px 20px !important; }
+    }
+  </style>
+</head>
+<body style="margin:0;padding:0;background-color:#f3f4f6;">
+
+<!--[if mso]>
+<table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#f3f4f6;">
+<tr><td>
+<![endif]-->
+
+<!-- Outer background wrapper -->
+<table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
+       style="border-collapse:collapse;background-color:#f3f4f6;">
+  <tr>
+    <td class="outer-cell" align="center" valign="top"
+        style="padding:40px 16px;">
+
+      <!-- Card (max 600 px, full width on mobile) -->
+      <table class="card-table" role="presentation" border="0" cellpadding="0" cellspacing="0"
+             width="600" style="width:600px;border-collapse:collapse;">
+
+        <!-- ── BLUE HEADER ── -->
+        <tr>
+          <td align="center" valign="middle"
+              style="background-color:#2563eb;padding:28px 40px;border-radius:8px 8px 0 0;mso-padding-alt:28px 40px;">
+            <!--[if mso]>
+            <table role="presentation" border="0" cellpadding="0" cellspacing="0" align="center">
+            <tr><td align="center">
+            <![endif]-->
+            <h1 style="margin:0;color:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:28px;font-weight:bold;line-height:1.2;letter-spacing:3px;mso-line-height-rule:exactly;">
+              SweepStake
+            </h1>
+            <p style="margin:6px 0 0 0;color:#bfdbfe;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.5;mso-line-height-rule:exactly;">
+              Football Prediction Competition
+            </p>
+            <!--[if mso]>
+            </td></tr>
+            </table>
+            <![endif]-->
+          </td>
+        </tr>
+
+        <!-- ── WHITE CONTENT AREA ── -->
+        <tr>
+          <td class="body-cell" valign="top"
+              style="background-color:#ffffff;padding:36px 40px;">
+            {% block content %}{% endblock %}
+          </td>
+        </tr>
+
+        <!-- ── FOOTER ── -->
+        <tr>
+          <td class="footer-cell" align="center" valign="middle"
+              style="background-color:#f9fafb;padding:20px 40px;border-top:1px solid #e5e7eb;border-radius:0 0 8px 8px;">
+            <p style="margin:0;color:#9ca3af;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.7;text-align:center;mso-line-height-rule:exactly;">
+              <strong style="color:#6b7280;font-family:Arial,Helvetica,sans-serif;">SweepStake</strong>
+              &mdash; Football Prediction Competition<br>
+              {% block footer_note %}You received this email because you joined a SweepStake competition.{% endblock %}
+            </p>
+          </td>
+        </tr>
+
+      </table>
+      <!-- /Card -->
+
+    </td>
+  </tr>
+</table>
+<!-- /Outer background wrapper -->
+
+<!--[if mso]>
+</td></tr>
+</table>
+<![endif]-->
+
+</body>
+</html>

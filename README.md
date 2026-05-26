@@ -18,18 +18,32 @@ Create a tournament or join one via an invite link. Make predictions on match sc
 - Optional email notifications via SMTP
 - Optional error monitoring via [Sentry](https://sentry.io/)
 
-**Point system (all values configurable per tournament):**
+### Tournament Overview
+![Preview Overview](/docs/imgs/page_1-overview.png)
 
-| Prediction | Default points |
-|---|---|
-| Exact match score | 5 |
-| Correct match winner / draw | 3 |
-| Correct group winner | 8 |
-| Correct knockout stage winner | 10 |
-| Correct tournament winner | 25 |
-| Correct runner-up | 15 |
-| Correct third place | 0 |
+### Admin Edit SweepStake
+![Preview Edit SweepStake](/docs/imgs/page_1-overview-edit_competition.png)
 
+### Leaderboard
+![Preview Leaderboard](/docs/imgs/page_2-leaderboard.png)
+
+### Place Predictions (all pages have light/dark mode)
+![Preview Place Predictions](/docs/imgs/page_3-predictions-combined.png)
+
+### Smartphone Optimized (all pages are responsive)
+![Preview Smartphone Place Predictions](/docs/imgs/page_3-predictions-smartphone.png)
+
+### View Friends' Predictions
+![Preview Friends Predictions](/docs/imgs/popup-match_predictions.png)
+
+
+<div align="center">
+
+If you like <b>SweepStake</b>, consider giving it a **star** ⭐!  
+Made with ❤️ in London  
+
+<a href='https://ko-fi.com/vanalmsick' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi1.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>  
+</div>
 
 ## Give it a quick try
 
@@ -123,6 +137,56 @@ docker compose -f /path/to/docker-compose.yml up -d
 | `SENTRY_DSN` | `""` | [Sentry](https://sentry.io/) DSN for error monitoring (backend + frontend). Leave empty to disable. |
 
 
+### Management CLI
+
+The container ships a management CLI at `backend/src/manage.py`. Shell in first:
+
+```sh
+docker exec -it sweepstake-app bash
+cd /app/backend
+```
+
+#### Interactive shell
+
+Drop into a Python REPL with an active database session and helpers pre-loaded:
+
+```sh
+/venv/bin/python src/manage.py shell
+```
+
+```
+SweepStake shell  (type exit() or Ctrl-D to quit)
+
+>>> query(User)                          # list all users
+>>> query(Tournament)                    # list all tournaments (incl. participants, matches, …)
+>>> query(TournamentParticipantLink)     # all tournament↔user participation rows
+>>> get_user_by_id(1)                    # fetch a single user
+>>> get_user_by_email("alice@example.com")
+>>> get_tournament_by_id(2)
+>>> get_user_tournaments(1)              # tournaments a user participates in
+
+>>> welcome_email(tournament_id, user_id)   # trigger a management command from the shell
+```
+
+For custom queries use `run()` to execute any coroutine:
+
+```python
+>>> run(db.execute(select(User).where(User.id == 1))).scalars().all()
+>>> run(db.execute(select(TournamentParticipantLink).where(TournamentParticipantLink.user_id == 1))).scalars().all()
+```
+
+#### Individual commands
+
+```sh
+# Re-send (or send) the welcome email to a specific user for a specific tournament
+/venv/bin/python src/manage.py welcome_email <tournament_id> <user_id>
+
+# One-liner without entering the container
+docker exec sweepstake_new-app-1 bash -c \
+  "cd /app/backend && /venv/bin/python src/manage.py welcome_email 42 7"
+```
+
+
 ## Do you want to help / contribute?
 
 ### Code overview
@@ -204,11 +268,3 @@ pytest tests/
 - Add reset password email
 - Add admin transparency logs
 
----
-
-<div align="center">
-
-If you like <b>Football Sweepstake</b>, consider giving it a **star** ⭐!  
-Made with ❤️ in London
-
-</div>

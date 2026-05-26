@@ -1,6 +1,7 @@
 import { useState } from 'react'
+import { Check } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { useUpdateMeMutation } from '../api/authApi'
+import { useUpdateMeMutation, useChangePasswordMutation } from '../api/authApi'
 import { useJoinTournamentMutation } from '../api/tournamentApi'
 import { useAppSelector } from '../store/hooks'
 import type { Gender } from '../types'
@@ -15,9 +16,15 @@ import {
   fieldClass,
 } from './base'
 
+const fieldErrorClass =
+  'w-full rounded border border-red-500 dark:border-red-500 bg-white dark:bg-gray-800 text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-400 disabled:opacity-50 disabled:cursor-not-allowed'
+
+
 export function SettingsModal({ onClose }: { onClose: () => void }) {
   const user = useAppSelector((state) => state.auth.user)
-  const [updateMe, { isLoading }] = useUpdateMeMutation()
+  const [updateMe, { isLoading: isSaving }] = useUpdateMeMutation()
+  const [changePassword, { isLoading: isChangingPassword }] = useChangePasswordMutation()
+  const isLoading = isSaving || isChangingPassword
 
   const [firstName, setFirstName] = useState(user?.first_name ?? '')
   const [lastName, setLastName] = useState(user?.last_name ?? '')
@@ -26,7 +33,26 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
   const [gender, setGender] = useState<Gender | ''>(user?.gender ?? '')
   const [error, setError] = useState<string | null>(null)
 
+  const [repeatEmail, setRepeatEmail] = useState('')
+
+  const originalEmail = user?.email ?? ''
+  const emailChanged = email !== originalEmail
+  const emailConfirmed = !emailChanged || (email.length > 0 && email === repeatEmail)
+  const showRepeatEmail = emailChanged && !emailConfirmed
+  const emailMismatch = showRepeatEmail
+
+  const [newPassword, setNewPassword] = useState('')
+  const [repeatNewPassword, setRepeatNewPassword] = useState('')
+  const [currentPassword, setCurrentPassword] = useState('')
+
+  const newPasswordFilled = newPassword.length > 0
+  const newPasswordConfirmed = !newPasswordFilled || (newPassword.length > 0 && newPassword === repeatNewPassword)
+  const showRepeatPassword = newPasswordFilled && !newPasswordConfirmed
+  const passwordMismatch = showRepeatPassword
+  const canSave = emailConfirmed && newPasswordConfirmed && (!newPasswordFilled || currentPassword.length > 0)
+
   async function handleSave() {
+    if (!canSave) return
     setError(null)
     try {
       await updateMe({
@@ -36,6 +62,9 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
         email: email || undefined,
         gender: (gender as Gender) || undefined,
       }).unwrap()
+      if (newPasswordFilled) {
+        await changePassword({ current_password: currentPassword, new_password: newPassword }).unwrap()
+      }
       onClose()
     } catch {
       setError('Failed to save changes. Please try again.')
@@ -76,14 +105,31 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
         </div>
         <div>
           <FieldLabel>Email</FieldLabel>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            disabled={isLoading}
-            className={fieldClass}
-          />
+          <div className="relative">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={isLoading}
+              className={`${emailMismatch ? fieldErrorClass : fieldClass}${emailConfirmed && emailChanged ? ' pr-9' : ''}`}
+            />
+            {emailConfirmed && emailChanged && (
+              <Check className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-green-500" aria-hidden="true" />
+            )}
+          </div>
         </div>
+        {showRepeatEmail && (
+          <div>
+            <FieldLabel>Repeat new email</FieldLabel>
+            <input
+              type="email"
+              value={repeatEmail}
+              onChange={(e) => setRepeatEmail(e.target.value)}
+              disabled={isLoading}
+              className={emailMismatch ? fieldErrorClass : fieldClass}
+            />
+          </div>
+        )}
         <div>
           <FieldLabel>Gender</FieldLabel>
           <select
@@ -98,11 +144,56 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
             <option value="other">Other</option>
           </select>
         </div>
+        <hr className="border-gray-200 dark:border-gray-700" />
+
+        {/* New password */}
+        <div>
+          <FieldLabel>New password</FieldLabel>
+          <div className="relative">
+            <input
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              disabled={isLoading}
+              className={`${passwordMismatch ? fieldErrorClass : fieldClass}${newPasswordConfirmed && newPasswordFilled ? ' pr-9' : ''}`}
+            />
+            {newPasswordConfirmed && newPasswordFilled && (
+              <Check className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-green-500" aria-hidden="true" />
+            )}
+          </div>
+        </div>
+
+        {showRepeatPassword && (
+          <div>
+            <FieldLabel>Repeat new password</FieldLabel>
+            <input
+              type="password"
+              value={repeatNewPassword}
+              onChange={(e) => setRepeatNewPassword(e.target.value)}
+              disabled={isLoading}
+              className={passwordMismatch ? fieldErrorClass : fieldClass}
+            />
+          </div>
+        )}
+
+        {newPasswordFilled && (
+          <div>
+            <FieldLabel>Current password</FieldLabel>
+            <input
+              type="password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              disabled={isLoading}
+              className={fieldClass}
+            />
+          </div>
+        )}
+
         <ErrorMsg msg={error} />
       </ModalBody>
       <ModalFooter>
         <BtnSecondary onClick={onClose}>Cancel</BtnSecondary>
-        <BtnPrimary onClick={handleSave} disabled={isLoading} loading={isLoading}>
+        <BtnPrimary onClick={handleSave} disabled={isLoading || !canSave} loading={isLoading}>
           {isLoading ? 'Saving…' : 'Save'}
         </BtnPrimary>
       </ModalFooter>

@@ -1,0 +1,231 @@
+{% extends "base_email.html" %}
+
+{% block title %}Welcome to {{ tournament_name }} – SweepStake{% endblock %}
+
+{% block content %}
+
+<!-- ── Greeting ── -->
+<h2 style="margin:0 0 8px 0;color:#111827;font-family:Arial,Helvetica,sans-serif;font-size:22px;font-weight:bold;line-height:1.3;mso-line-height-rule:exactly;">
+  Welcome to {{ tournament_name }}, {{ first_name }}!
+</h2>
+<p style="margin:0 0 24px 0;color:#374151;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;mso-line-height-rule:exactly;">
+  You have successfully joined the <strong>{{ tournament_name }}</strong> SweepStake.
+  We are excited to have you competing &mdash; may the best predictor win!
+</p>
+
+{% if stake %}
+<!-- ── Entry stake ── -->
+<table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
+       style="border-collapse:collapse;margin:0 0 28px 0;">
+  <tr>
+    <td style="background-color:#fffbeb;border-left:4px solid #f59e0b;padding:14px 18px;">
+      <p style="margin:0 0 6px 0;color:#92400e;font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;line-height:1.4;mso-line-height-rule:exactly;">
+        Entry Stake
+      </p>
+      <p style="margin:0 0 8px 0;color:#78350f;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.7;mso-line-height-rule:exactly;">
+        {{ stake }}
+      </p>
+      <p style="margin:0;color:#a16207;font-family:Arial,Helvetica,sans-serif;font-size:12px;font-style:italic;line-height:1.5;mso-line-height-rule:exactly;">
+        Note: it may take a few days for your payment to be confirmed by the organiser.
+      </p>
+    </td>
+  </tr>
+</table>
+{% endif %}
+
+<!-- ── Scoring rules ── -->
+<p style="margin:20px 0 6px 0;color:#1f2937;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;line-height:1.4;mso-line-height-rule:exactly;border-bottom:2px solid #e5e7eb;padding-bottom:8px;">
+  Competition Rules &amp; Scoring
+</p>
+<!--[if mso]><p style="margin:0;line-height:8px;font-size:8px;">&nbsp;</p><![endif]-->
+<p style="margin:0 0 12px 0;color:#374151;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;mso-line-height-rule:exactly;">
+  Points are awarded for each correct prediction:
+</p>
+
+<table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
+       style="border-collapse:collapse;border:1px solid #e5e7eb;margin:0 0 28px 0;">
+
+  {% if first_place_points %}
+  <tr>
+    <td style="padding:10px 14px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#374151;background-color:#f9fafb;border-bottom:1px solid #e5e7eb;">
+      <p style="margin:0;line-height:18px;mso-line-height-rule:exactly;">🥇 Correct tournament winner</p>
+    </td>
+    <td align="right" style="padding:10px 14px;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:bold;color:#2563eb;background-color:#f9fafb;border-bottom:1px solid #e5e7eb;white-space:nowrap;">
+      <p style="margin:0;line-height:18px;mso-line-height-rule:exactly;">{{ first_place_points }}&nbsp;pts</p>
+    </td>
+  </tr>
+  {% endif %}
+
+  {% if second_place_points %}
+  <tr>
+    <td style="padding:10px 14px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#374151;background-color:#ffffff;border-bottom:1px solid #e5e7eb;">
+      <p style="margin:0;line-height:18px;mso-line-height-rule:exactly;">🥈 Correct runner-up</p>
+    </td>
+    <td align="right" style="padding:10px 14px;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:bold;color:#2563eb;background-color:#ffffff;border-bottom:1px solid #e5e7eb;white-space:nowrap;">
+      <p style="margin:0;line-height:18px;mso-line-height-rule:exactly;">{{ second_place_points }}&nbsp;pts</p>
+    </td>
+  </tr>
+  {% endif %}
+
+  {% if third_place_points %}
+  <tr>
+    <td style="padding:10px 14px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#374151;background-color:#f9fafb;border-bottom:1px solid #e5e7eb;">
+      <p style="margin:0;line-height:18px;mso-line-height-rule:exactly;">🥉 Correct third place</p>
+    </td>
+    <td align="right" style="padding:10px 14px;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:bold;color:#2563eb;background-color:#f9fafb;border-bottom:1px solid #e5e7eb;white-space:nowrap;">
+      <p style="margin:0;line-height:18px;mso-line-height-rule:exactly;">{{ third_place_points }}&nbsp;pts</p>
+    </td>
+  </tr>
+  {% endif %}
+
+  {% if group_winner_points %}
+  <tr>
+    <td style="padding:10px 14px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#374151;background-color:#ffffff;border-bottom:1px solid #e5e7eb;">
+      <p style="margin:0;line-height:18px;mso-line-height-rule:exactly;">👥 Correct group winner</p>
+    </td>
+    <td align="right" style="padding:10px 14px;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:bold;color:#2563eb;background-color:#ffffff;border-bottom:1px solid #e5e7eb;white-space:nowrap;">
+      <p style="margin:0;line-height:18px;mso-line-height-rule:exactly;">{{ group_winner_points }}&nbsp;pts</p>
+    </td>
+  </tr>
+  {% endif %}
+
+  {% if stage_winner_points %}
+  <tr>
+    <td style="padding:10px 14px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#374151;background-color:#f9fafb;border-bottom:1px solid #e5e7eb;">
+      <p style="margin:0;line-height:18px;mso-line-height-rule:exactly;">🏆 Correct stage / round winner</p>
+    </td>
+    <td align="right" style="padding:10px 14px;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:bold;color:#2563eb;background-color:#f9fafb;border-bottom:1px solid #e5e7eb;white-space:nowrap;">
+      <p style="margin:0;line-height:18px;mso-line-height-rule:exactly;">{{ stage_winner_points }}&nbsp;pts</p>
+    </td>
+  </tr>
+  {% endif %}
+
+  {% if match_winner_points %}
+  <tr>
+    <td style="padding:10px 14px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#374151;background-color:#ffffff;border-bottom:1px solid #e5e7eb;">
+      <p style="margin:0;line-height:18px;mso-line-height-rule:exactly;">⚽ Correct match winner</p>
+    </td>
+    <td align="right" style="padding:10px 14px;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:bold;color:#2563eb;background-color:#ffffff;border-bottom:1px solid #e5e7eb;white-space:nowrap;">
+      <p style="margin:0;line-height:18px;mso-line-height-rule:exactly;">{{ match_winner_points }}&nbsp;pts</p>
+    </td>
+  </tr>
+  {% endif %}
+
+  {% if match_score_points %}
+  <tr>
+    <td style="padding:10px 14px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#374151;background-color:#f9fafb;">
+      <p style="margin:0;line-height:18px;mso-line-height-rule:exactly;">🎯 Exact match score</p>
+    </td>
+    <td align="right" style="padding:10px 14px;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:bold;color:#2563eb;background-color:#f9fafb;white-space:nowrap;">
+      <p style="margin:0;line-height:18px;mso-line-height-rule:exactly;">{{ match_score_points }}&nbsp;pts</p>
+    </td>
+  </tr>
+  {% endif %}
+
+</table>
+
+<!-- ── Prediction deadlines ── -->
+<p style="margin:20px 0 6px 0;color:#1f2937;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;line-height:1.4;mso-line-height-rule:exactly;border-bottom:2px solid #e5e7eb;padding-bottom:8px;">
+  Prediction Deadlines
+</p>
+<!--[if mso]><p style="margin:0;line-height:8px;font-size:8px;">&nbsp;</p><![endif]-->
+<p style="margin:0 0 12px 0;color:#374151;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.7;mso-line-height-rule:exactly;">
+  Make sure you submit your predictions in time:
+</p>
+
+<table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
+       style="border-collapse:collapse;margin:0 0 28px 0;">
+  <!-- Row 1 -->
+  <tr>
+    <td valign="top" width="32"
+        style="padding:0 0 12px 0;font-family:Arial,Helvetica,sans-serif;font-size:20px;line-height:1;color:#374151;">
+      &#128197;
+    </td>
+    <td valign="top" style="padding:0 0 12px 12px;">
+      <p style="margin:0 0 2px 0;color:#111827;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:bold;line-height:1.4;mso-line-height-rule:exactly;">
+        Tournament, Stage &amp; Group Predictions
+      </p>
+      <p style="margin:0;color:#374151;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;mso-line-height-rule:exactly;">
+        Submit by <strong>23:59 the day before</strong> the first match of that
+        tournament, stage, or group.  A countdown timer is shown in the top-right
+        corner so you always know how much time is left.
+      </p>
+    </td>
+  </tr>
+  <!-- Row 2 -->
+  <tr>
+    <td valign="top" width="32"
+        style="padding:0 0 12px 0;font-family:Arial,Helvetica,sans-serif;font-size:20px;line-height:1;color:#374151;">
+      &#9917;
+    </td>
+    <td valign="top" style="padding:0 0 12px 12px;">
+      <p style="margin:0 0 2px 0;color:#111827;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:bold;line-height:1.4;mso-line-height-rule:exactly;">
+        Match Predictions
+      </p>
+      <p style="margin:0;color:#374151;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;mso-line-height-rule:exactly;">
+        Submit up to <strong>1 minute before kick-off</strong>.  A red countdown
+        bar on each match card shows the remaining time.
+      </p>
+    </td>
+  </tr>
+  <!-- Row 3 — note -->
+  <tr>
+    <td valign="top" width="32"
+        style="padding:0;font-family:Arial,Helvetica,sans-serif;font-size:20px;line-height:1;color:#374151;">
+      &#128276;
+    </td>
+    <td valign="top" style="padding:0 0 0 12px;">
+      <p style="margin:0;color:#6b7280;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-style:italic;line-height:1.6;mso-line-height-rule:exactly;">
+        The organiser can add or edit predictions on your behalf even after the
+        deadline &mdash; useful if you joined the competition late.
+      </p>
+    </td>
+  </tr>
+</table>
+
+<!-- ── Sign-off ── -->
+<p style="margin:20px 0 20px 0;color:#374151;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;mso-line-height-rule:exactly;">
+  That is all you need to know. Head over to SweepStake, make your picks, and have a
+  great time!
+</p>
+
+<!-- Button: VML for Outlook Desktop, styled <a> for all other clients -->
+<table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
+       style="border-collapse:collapse;margin:0 0 24px 0;">
+  <tr>
+    <td align="center">
+      <!--[if mso]>
+      <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word"
+                   href="{{ tournament_url }}"
+                   style="height:44px;v-text-anchor:middle;width:220px;"
+                   arcsize="11%" strokecolor="#1d4ed8" fillcolor="#2563eb">
+        <w:anchorlock/>
+        <center style="color:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;">
+          Go to Competition
+        </center>
+      </v:roundrect>
+      <![endif]--><!--[if !mso]><!-->
+      <a href="{{ tournament_url }}"
+         style="background-color:#2563eb;border-radius:6px;color:#ffffff;display:inline-block;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;padding:12px 32px;text-align:center;text-decoration:none;-webkit-text-size-adjust:none;">
+        Go to Competition
+      </a>
+      <!--<![endif]-->
+    </td>
+  </tr>
+</table>
+
+<p style="margin:0;color:#374151;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;mso-line-height-rule:exactly;">
+  Good luck! &#127942;<br><br>
+  Best regards,<br>
+  <strong style="color:#111827;font-family:Arial,Helvetica,sans-serif;">{{ admin_sign_off }}</strong>
+</p>
+
+{% endblock %}
+
+{% block footer_note %}
+  You received this email because you joined the <strong>{{ tournament_name }}</strong> competition on SweepStake.
+  {% if admin_footer %}
+  <br><strong>Organised by:</strong>
+  {% for a in admin_footer %}{{ a.full_name }} ({{ a.email }}){% if not loop.last %}, {% endif %}{% endfor %}
+  {% endif %}
+{% endblock %}
