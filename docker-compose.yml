@@ -9,6 +9,7 @@ services:
     environment:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: sweepstake
+      # TZ: "UTC"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -60,6 +61,11 @@ services:
       # ── Process management ──────────────────────────────────────────────────
       # Rule of thumb for production: (2 × CPU cores) + 1
       GUNICORN_WORKERS: "2"
+
+      # ── Timezone ────────────────────────────────────────────────────────────
+      # IANA timezone string — sets the OS clock (nginx/supervisord/PostgreSQL logs)
+      # and the Python/APScheduler scheduled-job timezone in one variable.
+      # TZ: "UTC"
 
       # ── Optional ────────────────────────────────────────────────────────────
       # EMAIL_HOST: ""

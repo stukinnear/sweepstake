@@ -16,3 +16,4 @@ alembic
 requests
 aiocache
 sentry-sdk[fastapi]
+apscheduler

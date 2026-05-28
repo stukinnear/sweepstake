@@ -3,7 +3,7 @@ from hmac import compare_digest
 from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, delete as sa_delete
 from jose import jwt
 
 from src.users.models import Session as SessionModel
@@ -58,6 +58,20 @@ async def revoke_all_user_sessions(db: AsyncSession, user_id: int) -> None:
     for session in sessions:
         session.revoked = True
     await db.commit()
+
+
+async def delete_old_sessions(db: AsyncSession) -> int:
+    """Delete stale sessions: revoked sessions older than 30 days and all sessions older than 90 days."""
+    cutoff_revoked = datetime.utcnow() - timedelta(days=30)
+    cutoff_all = datetime.utcnow() - timedelta(days=90)
+    result = await db.execute(
+        sa_delete(SessionModel).where(
+            ((SessionModel.revoked == True) & (SessionModel.created_at < cutoff_revoked))  # noqa: E712
+            | (SessionModel.created_at < cutoff_all)
+        )
+    )
+    await db.commit()
+    return result.rowcount
 
 
 async def rotate_session(db: AsyncSession, old_session_id: str, user_id: int, new_session_id: str) -> SessionModel:

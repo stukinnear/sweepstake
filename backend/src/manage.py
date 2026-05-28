@@ -6,6 +6,7 @@ Usage (from /app/backend inside the container):
 Commands:
   shell                        — interactive shell with DB session and helpers pre-loaded
   welcome_email <t_id> <u_id>  — send (or re-send) the welcome email for a tournament/user pair
+  upcoming_reminders           — immediately run the upcoming-matches reminder job (normally fires at 15:00)
 """
 import argparse
 import asyncio
@@ -62,6 +63,17 @@ async def _cmd_welcome_email(tournament_id: int, user_id: int) -> None:
 
 
 # ---------------------------------------------------------------------------
+# upcoming_reminders
+# ---------------------------------------------------------------------------
+
+async def _cmd_upcoming_reminders() -> None:
+    from src.scheduler import _send_upcoming_match_reminders
+    print("Running upcoming-matches reminder job…")
+    await _send_upcoming_match_reminders()
+    print("Done.")
+
+
+# ---------------------------------------------------------------------------
 # shell
 # ---------------------------------------------------------------------------
 
@@ -94,6 +106,7 @@ Custom queries:
 
 Management commands:
   welcome_email(tournament_id, user_id)
+  upcoming_reminders()                      run the upcoming-matches reminder job now
 """
 
 
@@ -156,6 +169,10 @@ async def _cmd_shell() -> None:
                 )
             ).scalars().all()
 
+        def upcoming_reminders() -> None:
+            """Run the upcoming-matches reminder job now: upcoming_reminders()"""
+            run(_cmd_upcoming_reminders())
+
         namespace = {
             "db": db,
             "run": run,
@@ -167,6 +184,7 @@ async def _cmd_shell() -> None:
             "get_user_tournaments": get_user_tournaments,
             # management commands
             "welcome_email": welcome_email,
+            "upcoming_reminders": upcoming_reminders,
             # ad-hoc query building
             "select": select,
             "User": User,
@@ -206,12 +224,16 @@ def main() -> None:
     p.add_argument("tournament_id", type=int, help="Tournament ID")
     p.add_argument("user_id", type=int, help="User ID")
 
+    sub.add_parser("upcoming_reminders", help="Run the upcoming-matches reminder job now (normally fires at 15:00)")
+
     args = parser.parse_args()
 
     if args.command == "shell":
         asyncio.run(_cmd_shell())
     elif args.command == "welcome_email":
         asyncio.run(_cmd_welcome_email(args.tournament_id, args.user_id))
+    elif args.command == "upcoming_reminders":
+        asyncio.run(_cmd_upcoming_reminders())
 
 
 if __name__ == "__main__":

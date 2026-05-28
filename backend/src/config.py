@@ -67,6 +67,7 @@ class Settings(BaseSettings):
     root_path: str = ""
     sentry_dsn: str = ""
     app_version: str = ""
+    tz: str = "UTC"
 
     @model_validator(mode="after")
     def _apply_demo_mode(self) -> Settings:

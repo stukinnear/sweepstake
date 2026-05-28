@@ -1,0 +1,242 @@
+{% extends "base_email.html" %}
+
+{% block title %}Upcoming Matches – {{ tournament_name }} – SweepStake{% endblock %}
+
+{% block head_extra %}
+<style type="text/css">
+  @media only screen and (max-width: 520px) {
+    .match-tv      { display: none !important; max-height: 0 !important; overflow: hidden !important; font-size: 0 !important; line-height: 0 !important; padding: 0 !important; width: 0 !important; }
+    .match-tv-th   { display: none !important; max-height: 0 !important; overflow: hidden !important; font-size: 0 !important; line-height: 0 !important; padding: 0 !important; width: 0 !important; }
+  }
+</style>
+{% endblock %}
+
+{# ── Team-logo circle macro ─────────────────────────────────────────────────
+   Modern clients: round via border-radius.
+   Outlook Desktop: square image (border-radius ignored, still legible).
+   No image: small gray circle placeholder.
+──────────────────────────────────────────────────────────────────────────── #}
+{% macro team_img(image_url, team_name) %}
+{% if image_url %}
+<img src="{{ image_url }}" width="28" height="28" alt="{{ team_name }}"
+     style="display:block;width:28px;height:28px;border-radius:50%;border:1px solid #e5e7eb;-ms-interpolation-mode:bicubic;" />
+{% else %}
+<table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;"><tr>
+  <td width="28" height="28" align="center" valign="middle"
+      style="width:28px;height:28px;background-color:#e5e7eb;border-radius:14px;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#9ca3af;text-align:center;vertical-align:middle;line-height:28px;mso-line-height-rule:exactly;">
+    &bull;
+  </td>
+</tr></table>
+{% endif %}
+{% endmacro %}
+
+{% block content %}
+
+<!-- ── Greetings ── -->
+<p style="margin:0 0 20px 0;color:#374151;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;mso-line-height-rule:exactly;">
+  Hi {{ first_name }},
+</p>
+
+<!-- ── Winner-prediction deadline reminder (shown only when first match is tomorrow) ── -->
+{% if winner_reminder %}
+<table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
+       style="border-collapse:collapse;margin:0 0 24px 0;">
+  <tr>
+    <td style="background-color:#fef3c7;border-left:4px solid #d97706;padding:16px 18px;">
+      <p style="margin:0 0 6px 0;color:#92400e;font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;line-height:1.4;mso-line-height-rule:exactly;">
+        &#9200; Prediction Deadline &mdash; Today at 23:59
+      </p>
+      <p style="margin:0 0 12px 0;color:#78350f;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;mso-line-height-rule:exactly;">
+        The first match of <strong>{{ tournament_name }}</strong> kicks off tomorrow.
+        Winner predictions close <strong>tonight at 23:59</strong> &mdash; don&apos;t miss your chance to pick:
+      </p>
+      <table role="presentation" border="0" cellpadding="0" cellspacing="0">
+        {% if winner_reminder.has_tournament %}
+        <tr>
+          <td style="padding:2px 0;color:#92400e;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;mso-line-height-rule:exactly;">
+            &#127942;&nbsp; Tournament Winner
+          </td>
+        </tr>
+        {% endif %}
+        {% if winner_reminder.has_groups %}
+        <tr>
+          <td style="padding:2px 0;color:#92400e;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;mso-line-height-rule:exactly;">
+            &#129351;&nbsp; Group Winners
+          </td>
+        </tr>
+        {% endif %}
+        {% if winner_reminder.has_stages %}
+        <tr>
+          <td style="padding:2px 0;color:#92400e;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;mso-line-height-rule:exactly;">
+            &#127941;&nbsp; Stage Winners
+          </td>
+        </tr>
+        {% endif %}
+      </table>
+    </td>
+  </tr>
+</table>
+{% endif %}
+
+<!-- ── Message ── -->
+<p style="margin:0 0 20px 0;color:#374151;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;mso-line-height-rule:exactly;">
+  Have you already placed your predictions for the next matches in <strong>{{ tournament_name }}</strong>? Or do you want to change them? Don't forget to do so, as your predictions will be locked as soon as the match starts!
+</p>
+
+<!-- ── Match table ── -->
+<table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
+       style="border-collapse:collapse;margin:0 0 28px 0;border:1px solid #e5e7eb;">
+
+  <!-- Header row -->
+  <tr>
+    <td width="72" style="padding:8px 8px;background-color:#f9fafb;border-bottom:2px solid #001440;font-family:Arial,Helvetica,sans-serif;font-size:10px;font-weight:bold;color:#6b7280;text-transform:uppercase;letter-spacing:0.08em;white-space:nowrap;mso-line-height-rule:exactly;line-height:16px;">
+      Time
+    </td>
+    <td colspan="2" style="padding:8px 8px;background-color:#f9fafb;border-bottom:2px solid #001440;font-family:Arial,Helvetica,sans-serif;font-size:10px;font-weight:bold;color:#6b7280;text-transform:uppercase;letter-spacing:0.08em;mso-line-height-rule:exactly;line-height:16px;">
+      Home
+    </td>
+    <td width="80" align="center" style="padding:8px 6px;background-color:#f9fafb;border-bottom:2px solid #001440;font-family:Arial,Helvetica,sans-serif;font-size:10px;font-weight:bold;color:#6b7280;text-transform:uppercase;letter-spacing:0.08em;text-align:center;mso-line-height-rule:exactly;line-height:16px;">
+      Prediction
+    </td>
+    <td colspan="2" align="right" style="padding:8px 8px;background-color:#f9fafb;border-bottom:2px solid #001440;font-family:Arial,Helvetica,sans-serif;font-size:10px;font-weight:bold;color:#6b7280;text-transform:uppercase;letter-spacing:0.08em;text-align:right;mso-line-height-rule:exactly;line-height:16px;">
+      Away
+    </td>
+    <td class="match-tv-th" width="60" style="padding:8px 8px;background-color:#f9fafb;border-bottom:2px solid #001440;font-family:Arial,Helvetica,sans-serif;font-size:10px;font-weight:bold;color:#6b7280;text-transform:uppercase;letter-spacing:0.08em;white-space:nowrap;mso-line-height-rule:exactly;line-height:16px;">
+      TV
+    </td>
+  </tr>
+
+  {% for match in matches %}
+  <tr style="background-color:{{ '#ffffff' if loop.index is odd else '#f9fafb' }}">
+
+    <!-- Time (date + time stacked) -->
+    <td width="72" valign="middle"
+        style="padding:10px 8px;width:72px;vertical-align:middle;border-bottom:1px solid #f3f4f6;white-space:nowrap;">
+      <p style="margin:0 0 1px 0;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#9ca3af;line-height:14px;mso-line-height-rule:exactly;">{{ match.date_line }}</p>
+      <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:bold;color:#111827;line-height:16px;mso-line-height-rule:exactly;">{{ match.time_line }}</p>
+    </td>
+
+    <!-- Home team image -->
+    <td width="38" valign="middle"
+        style="padding:10px 4px 10px 8px;width:38px;vertical-align:middle;border-bottom:1px solid #f3f4f6;">
+      {{ team_img(match.home_team_image_url, match.home_team_name) }}
+    </td>
+
+    <!-- Home team name -->
+    <td valign="middle"
+        style="padding:10px 8px 10px 4px;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:500;color:#111827;vertical-align:middle;border-bottom:1px solid #f3f4f6;mso-line-height-rule:exactly;line-height:18px;">
+      {{ match.home_team_name }}
+    </td>
+
+    <!-- Score prediction (centred) -->
+    <td width="80" align="center" valign="middle"
+        style="padding:10px 6px;width:80px;text-align:center;vertical-align:middle;border-bottom:1px solid #f3f4f6;">
+      {% if match.pred_home_score is not none and match.pred_away_score is not none %}
+      <table cellpadding="0" cellspacing="0" border="0" align="center" style="border-collapse:collapse;">
+        <tr>
+          <td align="center"
+              style="background-color:#eff6ff;border-radius:4px;padding:4px 8px;font-family:'Courier New',Courier,monospace;font-size:14px;font-weight:bold;color:#1d4ed8;white-space:nowrap;letter-spacing:1px;mso-line-height-rule:exactly;line-height:18px;">
+            {{ match.pred_home_score }}&nbsp;&ndash;&nbsp;{{ match.pred_away_score }}
+          </td>
+        </tr>
+      </table>
+      {% else %}
+      <table cellpadding="0" cellspacing="0" border="0" align="center" style="border-collapse:collapse;">
+        <tr>
+          <td align="center"
+              style="padding:4px 6px;font-family:'Courier New',Courier,monospace;font-size:13px;color:#d1d5db;letter-spacing:1px;white-space:nowrap;mso-line-height-rule:exactly;line-height:18px;">
+            &mdash;&nbsp;:&nbsp;&mdash;
+          </td>
+        </tr>
+      </table>
+      {% endif %}
+    </td>
+
+    <!-- Away team name -->
+    <td valign="middle" align="right"
+        style="padding:10px 4px 10px 8px;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:500;color:#111827;text-align:right;vertical-align:middle;border-bottom:1px solid #f3f4f6;mso-line-height-rule:exactly;line-height:18px;">
+      {{ match.away_team_name }}
+    </td>
+
+    <!-- Away team image -->
+    <td width="38" valign="middle"
+        style="padding:10px 8px 10px 4px;width:38px;vertical-align:middle;border-bottom:1px solid #f3f4f6;">
+      {{ team_img(match.away_team_image_url, match.away_team_name) }}
+    </td>
+
+    <!-- TV channel (hidden on small screens) -->
+    <td class="match-tv" width="60" valign="middle"
+        style="padding:10px 8px;width:60px;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#6b7280;vertical-align:middle;border-bottom:1px solid #f3f4f6;white-space:nowrap;mso-line-height-rule:exactly;line-height:16px;">
+      {{ match.tv_channel or '' }}
+    </td>
+
+  </tr>
+  {% endfor %}
+
+</table>
+
+<!-- ── Message ── -->
+<p style="margin:0 0 20px 0;color:#374151;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;mso-line-height-rule:exactly;">
+  See how you are doing on the leaderboard, what other's predicted (🔍 icons), or change your upcoming predictions:
+</p>
+
+<!-- ── Call-to-action buttons ── -->
+<table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
+       style="border-collapse:collapse;margin:0 0 28px 0;">
+  <tr>
+    <td align="center" valign="top">
+      <!--[if mso]>
+      <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word"
+                   href="{{ tournament_url }}/predictions/my"
+                   style="height:44px;v-text-anchor:middle;width:200px;"
+                   arcsize="11%" strokecolor="#1d4ed8" fillcolor="#001440">
+        <w:anchorlock/>
+        <center style="color:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;">
+          My Predictions
+        </center>
+      </v:roundrect>
+      <![endif]--><!--[if !mso]><!-->
+      <a href="{{ tournament_url }}/predictions/my"
+         style="background-color:#001440;border-radius:6px;color:#ffffff;display:inline-block;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;padding:12px 36px;text-align:center;text-decoration:none;-webkit-text-size-adjust:none;">
+        My Predictions
+      </a>
+      <!--<![endif]-->
+    </td>
+    <td width="16" style="font-size:0;line-height:0;">&nbsp;</td>
+    <td align="center" valign="top">
+      <!--[if mso]>
+      <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word"
+                   href="{{ tournament_url }}/leaderboard"
+                   style="height:44px;v-text-anchor:middle;width:200px;"
+                   arcsize="11%" strokecolor="#1d4ed8" fillcolor="#001440">
+        <w:anchorlock/>
+        <center style="color:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;">
+          Leaderboard
+        </center>
+      </v:roundrect>
+      <![endif]--><!--[if !mso]><!-->
+      <a href="{{ tournament_url }}/leaderboard"
+         style="background-color:#001440;border-radius:6px;color:#ffffff;display:inline-block;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;padding:12px 36px;text-align:center;text-decoration:none;-webkit-text-size-adjust:none;">
+        Leaderboard
+      </a>
+      <!--<![endif]-->
+    </td>
+  </tr>
+</table>
+
+<!-- ── Sign-off ── -->
+<p style="margin:0;color:#374151;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;mso-line-height-rule:exactly;">
+  Good luck! &#127942;<br><br>
+  Best regards,<br>
+  <strong style="color:#111827;font-family:Arial,Helvetica,sans-serif;">{{ admin_sign_off }}</strong>
+</p>
+
+{% endblock %}
+
+{% block footer_note %}
+  You received this email because you are a participant in the <strong>{{ tournament_name }}</strong> competition on SweepStake.
+  {% if admin_footer %}
+  <br><strong>Organised by:</strong>
+  {% for a in admin_footer %}{{ a.full_name }} ({{ a.email }}){% if not loop.last %}, {% endif %}{% endfor %}
+  {% endif %}
+{% endblock %}

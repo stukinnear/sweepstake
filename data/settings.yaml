@@ -5,6 +5,8 @@
 port: 8888
 debug: false
 secret_key: "dev-secret-key-for-testing-change-in-production"
+# IANA timezone string — controls OS clock, nginx/supervisord logs, and APScheduler job times.
+tz: "UTC"
 # database_url: not set here → falls back to SQLite at data/sweepstake.db
 # For PostgreSQL, set DATABASE_URL env var or add database_url to data/.env.local:
 #   database_url: "postgresql+asyncpg://postgres:postgres@localhost:5432/sweepstake"

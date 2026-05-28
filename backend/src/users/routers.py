@@ -23,7 +23,7 @@ from src.users.crud import (
     get_valid_password_reset_token, clear_password_reset_token,
 )
 from src.users.models import Session as SessionModel
-from src.users.email import send_password_reset_email
+from src.emails.password_reset_email import send_password_reset_email
 from src.config import settings
 from src.logging_config import get_logger
 
@@ -423,7 +423,7 @@ async def forgot_password(
         expire_minutes = getattr(settings, "password_reset_expire_minutes", 30)
         await create_password_reset_token(db, user.id, token, expire_minutes)
         reset_link = f"{settings.main_host.rstrip('/')}/reset-password?token={token}"
-        await send_password_reset_email(user.email, reset_link)
+        await send_password_reset_email(user.email, reset_link, first_name=user.first_name or "there")
         logger.info("Password reset requested for user %s", user.id)
     return {"message": "If that email is registered you will receive a reset link shortly."}
 

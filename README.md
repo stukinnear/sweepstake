@@ -117,6 +117,7 @@ docker compose -f /path/to/docker-compose.yml up -d
 
 | Variable | Default | Description |
 |---|---|---|
+| `TZ` | `UTC` | IANA timezone string (e.g. `Europe/London`). Sets the OS clock for nginx/supervisord/PostgreSQL logs and the APScheduler daily-job timezone. |
 | `SECRET_KEY` | *(dev placeholder)* | Secret used to sign JWT tokens. **Change this before deploying.** |
 | `DATABASE_URL` | `postgresql+asyncpg://postgres:postgres@localhost:5432/sweepstake` | SQLAlchemy async database URL. |
 | `HTTPS_AUTH_ONLY` | `true` | Adds the `Secure` flag to auth cookies. Set to `false` when testing over plain HTTP. |
@@ -148,13 +149,6 @@ The container ships a management CLI at `backend/src/manage.py`. Shell in first:
 ```sh
 docker exec -it sweepstake-app bash
 cd /app/backend
-```
-
-#### Interactive shell
-
-Drop into a Python REPL with an active database session and helpers pre-loaded:
-
-```sh
 /venv/bin/python src/manage.py shell
 ```
 
@@ -170,6 +164,7 @@ SweepStake shell  (type exit() or Ctrl-D to quit)
 >>> get_user_tournaments(1)              # tournaments a user participates in
 
 >>> welcome_email(tournament_id, user_id)   # trigger a management command from the shell
+>>> upcoming_reminders()                     # run the upcoming-matches reminder job now
 ```
 
 For custom queries use `run()` to execute any coroutine:
@@ -179,15 +174,12 @@ For custom queries use `run()` to execute any coroutine:
 >>> run(db.execute(select(TournamentParticipantLink).where(TournamentParticipantLink.user_id == 1))).scalars().all()
 ```
 
-#### Individual commands
+#### One-liner without entering the container
 
 ```sh
-# Re-send (or send) the welcome email to a specific user for a specific tournament
-/venv/bin/python src/manage.py welcome_email <tournament_id> <user_id>
-
 # One-liner without entering the container
-docker exec sweepstake_new-app-1 bash -c \
-  "cd /app/backend && /venv/bin/python src/manage.py welcome_email 42 7"
+docker exec sweepstake-app bash -c "cd /app/backend && /venv/bin/python /app/backend/src/manage.py welcome_email 42 7"
+docker exec sweepstake-app bash -c "cd /app/backend && /venv/bin/python /app/backend/src/manage.py upcoming_reminders"
 ```
 
 

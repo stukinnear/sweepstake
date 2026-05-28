@@ -1,6 +1,7 @@
 import asyncio
 import requests, time
-from datetime import date
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from aiocache import cached
 from src.config import settings
@@ -19,7 +20,7 @@ async def list_tournaments() -> list:
     response.raise_for_status()
     data = response.json()
 
-    today = date.today().strftime("%Y-%m-%d")
+    today = datetime.now(ZoneInfo(settings.tz)).strftime("%Y-%m-%d")
 
     tournament_lst_formatted = [
         {
