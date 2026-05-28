@@ -148,7 +148,7 @@ async def send_competition_welcome_email(
     sign_off = _format_sign_off(admins)
     reply_to = _format_reply_to(admins)
     footer_entries = _admin_footer_entries(admins)
-    tournament_url = f"{settings.frontend_url.rstrip('/')}/tournament/{tournament_id}"
+    tournament_url = f"{settings.main_host.rstrip('/')}/tournament/{tournament_id}"
 
     stake_html: Optional[Markup] = _linkify_stake(stake) if stake else None
     context = {

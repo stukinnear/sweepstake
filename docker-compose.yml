@@ -40,32 +40,34 @@ services:
       # Secure flag to cookies, which browsers silently reject over plain HTTP
       # (even though the request succeeds, the cookie is never stored/sent).
       # Set to "true" only when this container is behind a TLS-terminating proxy.
-      SERVER_HTTPS_AUTH_ONLY: "false"
+      HTTPS_AUTH_ONLY: "false"
 
       # Set to "true" to load test data on startup (for testing/demo purposes).
       # Don't use this in production.
-      SERVER_LOAD_TEST_DATA: "true"
+      LOAD_TEST_DATA: "true"
 
       # ── Database ────────────────────────────────────────────────────────────
-      SERVER_DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/sweepstake
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/sweepstake
 
       # ── FastAPI ─────────────────────────────────────────────────────────────
-      # SERVER_ROOT_PATH tells FastAPI its mount prefix (/api) so that the
+      # ROOT_PATH tells FastAPI its mount prefix (/api) so that the
       # generated OpenAPI schema and Swagger UI use correct URLs.
-      SERVER_ROOT_PATH: /api
+      ROOT_PATH: /api
 
       # CHANGE THIS before deploying — use a long random string
-      SERVER_SECRET_KEY: change-me-in-production-use-a-long-random-string
+      SECRET_KEY: change-me-in-production-use-a-long-random-string
 
       # ── Process management ──────────────────────────────────────────────────
       # Rule of thumb for production: (2 × CPU cores) + 1
       GUNICORN_WORKERS: "2"
 
       # ── Optional ────────────────────────────────────────────────────────────
-      # SERVER_SMTP_HOST: ""
-      # SERVER_SMTP_PORT: "587"
-      # SERVER_SMTP_USERNAME: ""
-      # SERVER_SMTP_PASSWORD: ""
+      # EMAIL_HOST: ""
+      # EMAIL_PORT: "587"
+      # EMAIL_HOST_USER: ""
+      # EMAIL_HOST_PASSWORD: ""
+      # EMAIL_USE_TLS: "true"
+      # EMAIL_USE_SSL: "false"
       # FOOTBALL_DATA_ORG_API_KEY: ""
       # SENTRY_DSN: ""  # Set to your Sentry DSN to enable error monitoring (backend + frontend)
 

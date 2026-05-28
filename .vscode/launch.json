@@ -43,8 +43,8 @@
             "cwd": "${workspaceFolder}/backend",
             "env": {
                 "PYTHONPATH": "${workspaceFolder}/backend",
-                "SERVER_HTTPS_AUTH_ONLY": "false",
-                "SERVER_DATABASE_URL": "postgresql+asyncpg://postgres:postgres@localhost:5432/sweepstake",
+                "HTTPS_AUTH_ONLY": "false",
+                "DATABASE_URL": "postgresql+asyncpg://postgres:postgres@localhost:5432/sweepstake",
             },
             "jinja": true,
             "preLaunchTask": "start-postgres",
@@ -65,9 +65,9 @@
             "cwd": "${workspaceFolder}/backend",
             "env": {
                 "PYTHONPATH": "${workspaceFolder}/backend",
-                "SERVER_LOAD_TEST_DATA": "true",
-                "SERVER_HTTPS_AUTH_ONLY": "false",
-                "SERVER_DATABASE_URL": "postgresql+asyncpg://postgres:postgres@localhost:5432/sweepstake",
+                "LOAD_TEST_DATA": "true",
+                "HTTPS_AUTH_ONLY": "false",
+                "DATABASE_URL": "postgresql+asyncpg://postgres:postgres@localhost:5432/sweepstake",
             },
             "jinja": true,
             "preLaunchTask": "start-postgres",

@@ -32,6 +32,11 @@ export function LeaderboardPage() {
     )
   }
 
+  const today = new Date().toISOString().slice(0, 10)
+  const isAdmin = tournament.admin_lst.some((a) => a.id === currentUser?.id)
+  const hasStarted = tournament.start_date != null && tournament.start_date <= today
+  const canViewPredictions = isAdmin || hasStarted
+
   return (
     <PageShell>
       <div className="p-6 sm:p-8 space-y-8">
@@ -61,20 +66,22 @@ export function LeaderboardPage() {
               {leaderboard.map((entry) => (
                 <li key={entry.user_id}>
                   <button
-                    onClick={() => navigate(`/tournament/${tournamentId}/predictions/${entry.user_id}`)}
-                    className={`w-full flex items-center gap-4 px-4 py-3 transition text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 ${
+                    onClick={canViewPredictions ? () => navigate(`/tournament/${tournamentId}/predictions/${entry.user_id}`) : undefined}
+                    className={`w-full flex items-center gap-4 px-4 py-3 transition text-left ${
+                      canViewPredictions ? 'hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer' : 'cursor-default'
+                    } ${
                       entry.user_id === currentUser?.id
                         ? 'bg-blue-50 dark:bg-blue-900/20'
                         : 'bg-white dark:bg-gray-800'
                     }`}
-                    aria-label={`View ${entry.user_name ?? 'user'}'s predictions`}
+                    aria-label={canViewPredictions ? `View ${entry.user_name ?? 'user'}'s predictions` : undefined}
                   >
                     <span className="w-8 text-center text-sm font-semibold text-gray-500 dark:text-gray-400 tabular-nums">
                       {entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : entry.rank === 3 ? '🥉' : `#${entry.rank}`}
                     </span>
                     <span className="flex-1 flex items-center gap-1.5 text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                       {entry.user_name ?? '—'}
-                      <Search size={13} className="text-gray-400 flex-shrink-0" />
+                      {canViewPredictions && <Search size={13} className="text-gray-400 flex-shrink-0" />}
                     </span>
                     <span className="text-sm font-semibold text-blue-600 dark:text-blue-400 tabular-nums">
                       {entry.total_points} pts

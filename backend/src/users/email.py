@@ -17,29 +17,29 @@ logger = get_logger(__name__)
 
 
 def _smtp_configured() -> bool:
-    return bool(settings.smtp_host)
+    return bool(settings.email_host)
 
 
 def _send_sync(to_email: str, subject: str, body_text: str) -> None:
     """Blocking SMTP send — called via asyncio.to_thread."""
-    smtp_host = settings.smtp_host
-    smtp_port = settings.smtp_port
-    smtp_username = settings.smtp_username
-    smtp_password = settings.smtp_password
-    from_email = settings.smtp_from_email
-
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
-    msg["From"] = from_email
+    msg["From"] = settings.email_from
     msg["To"] = to_email
     msg.attach(MIMEText(body_text, "plain"))
 
-    with smtplib.SMTP(smtp_host, smtp_port) as server:
+    if settings.email_use_ssl:
+        ctx = smtplib.SMTP_SSL(settings.email_host, settings.email_port)
+    else:
+        ctx = smtplib.SMTP(settings.email_host, settings.email_port)
+
+    with ctx as server:
         server.ehlo()
-        server.starttls()
-        if smtp_username and smtp_password:
-            server.login(smtp_username, smtp_password)
-        server.sendmail(from_email, to_email, msg.as_string())
+        if not settings.email_use_ssl and settings.email_use_tls:
+            server.starttls()
+        if settings.email_host_user and settings.email_host_password:
+            server.login(settings.email_host_user, settings.email_host_password)
+        server.sendmail(settings.email_from, to_email, msg.as_string())
 
 
 async def send_password_reset_email(to_email: str, reset_link: str) -> None:

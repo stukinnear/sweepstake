@@ -58,6 +58,14 @@ export const authApi = baseApi.injectEndpoints({
       },
     }),
 
+    deleteMe: build.mutation<void, void>({
+      query: () => ({ url: '/auth/me', method: 'DELETE' }),
+      invalidatesTags: ['Me'],
+      onQueryStarted: async (_, { queryFulfilled }) => {
+        try { await queryFulfilled; localStorage.removeItem('loginExpiry') } catch {}
+      },
+    }),
+
     changePassword: build.mutation<void, ChangePasswordRequest>({
       query: (body) => ({ url: '/auth/change-password', method: 'POST', body }),
     }),
@@ -79,6 +87,7 @@ const {
   useRegisterMutation,
   useLogoutMutation,
   useRefreshMutation,
+  useDeleteMeMutation,
   useChangePasswordMutation,
   useForgotPasswordMutation,
   useResetPasswordMutation,
@@ -92,6 +101,7 @@ export {
   useRegisterMutation,
   useLogoutMutation,
   useRefreshMutation,
+  useDeleteMeMutation,
   useChangePasswordMutation,
   useForgotPasswordMutation,
   useResetPasswordMutation,

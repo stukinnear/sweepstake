@@ -1,4 +1,4 @@
-import { useState, useEffect, Fragment } from 'react'
+import { useState, useEffect, useRef, Fragment } from 'react'
 import { useParams, Navigate, useSearchParams } from 'react-router-dom'
 import { Dices, Search } from 'lucide-react'
 import { GroupStatsModal, StageStatsModal, TournamentStatsModal } from '../modals/winnerStats'
@@ -422,6 +422,7 @@ export function PredictionsPage() {
   const [upsertMatchPred] = useUpsertMatchPredictionMutation()
   const [, setRenderTick] = useState(0)
   const [isGeneratingRandom, setIsGeneratingRandom] = useState(false)
+  const adminEditConfirmedRef = useRef(false)
 
   useEffect(() => {
     if (!matches) return
@@ -464,8 +465,11 @@ export function PredictionsPage() {
     : null
 
   function confirmAdminEdit(): boolean {
+    if (adminEditConfirmedRef.current) return true
     const name = viewingUser?.user_name ?? 'this user'
-    return window.confirm(`Are you sure you want to edit ${name}'s predictions?`)
+    const confirmed = window.confirm(`Are you sure you want to edit ${name}'s predictions?`)
+    if (confirmed) adminEditConfirmedRef.current = true
+    return confirmed
   }
 
   async function handleGenerateRandomScores() {

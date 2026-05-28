@@ -73,7 +73,7 @@ def render_html(template_name: str, context: dict) -> str:
 
 
 def _smtp_configured() -> bool:
-    return bool(settings.smtp_host)
+    return bool(settings.email_host)
 
 
 def _send_sync(
@@ -86,19 +86,25 @@ def _send_sync(
     """Blocking SMTP send — called via asyncio.to_thread."""
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
-    msg["From"] = settings.smtp_from_email
+    msg["From"] = settings.email_from
     msg["To"] = to_email
     if reply_to:
         msg["Reply-To"] = reply_to
     msg.attach(MIMEText(text_body, "plain", "utf-8"))
     msg.attach(MIMEText(html_body, "html", "utf-8"))
 
-    with smtplib.SMTP(settings.smtp_host, settings.smtp_port) as server:
+    if settings.email_use_ssl:
+        ctx = smtplib.SMTP_SSL(settings.email_host, settings.email_port)
+    else:
+        ctx = smtplib.SMTP(settings.email_host, settings.email_port)
+
+    with ctx as server:
         server.ehlo()
-        server.starttls()
-        if settings.smtp_username and settings.smtp_password:
-            server.login(settings.smtp_username, settings.smtp_password)
-        server.sendmail(settings.smtp_from_email, to_email, msg.as_string())
+        if not settings.email_use_ssl and settings.email_use_tls:
+            server.starttls()
+        if settings.email_host_user and settings.email_host_password:
+            server.login(settings.email_host_user, settings.email_host_password)
+        server.sendmail(settings.email_from, to_email, msg.as_string())
 
 
 async def send_email(

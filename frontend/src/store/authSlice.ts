@@ -49,6 +49,11 @@ const authSlice = createSlice({
         state.isAuthenticated = false
         state.bootstrapped = true
       })
+      .addMatcher(authApi.endpoints.deleteMe.matchFulfilled, (state) => {
+        state.user = null
+        state.isAuthenticated = false
+        state.bootstrapped = true
+      })
       // If getMe returns an error (e.g. after page refresh with no valid cookie), mark unauthenticated
       .addMatcher(authApi.endpoints.getMe.matchRejected, (state) => {
         state.user = null

@@ -422,8 +422,7 @@ async def forgot_password(
         token = str(uuid.uuid4())
         expire_minutes = getattr(settings, "password_reset_expire_minutes", 30)
         await create_password_reset_token(db, user.id, token, expire_minutes)
-        frontend_url = getattr(settings, "frontend_url", "http://localhost:3000")
-        reset_link = f"{frontend_url}/reset-password?token={token}"
+        reset_link = f"{settings.main_host.rstrip('/')}/reset-password?token={token}"
         await send_password_reset_email(user.email, reset_link)
         logger.info("Password reset requested for user %s", user.id)
     return {"message": "If that email is registered you will receive a reset link shortly."}
@@ -476,6 +475,41 @@ async def get_current_user_info(
     - 401 Unauthorized: Missing or invalid token
     """
     return current_user
+
+
+@router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_account(
+    response: Response,
+    db: AsyncSession = Depends(get_db),
+    current_user: models.UserRead = Depends(get_current_user),
+):
+    """
+    Permanently delete the authenticated user's account.
+
+    Removes all predictions, withdraws admin/participant memberships, and deletes
+    any competitions where the user was the sole admin. This action is irreversible.
+
+    **Authentication:** Required
+
+    **Returns:** No content (HTTP 204)
+    """
+    await user_crud.delete_account(db, current_user.id)
+    logger.info(f"User {current_user.id} deleted their account")
+    response.delete_cookie(
+        key="access_token",
+        secure=settings.https_auth_only,
+        httponly=True,
+        samesite="strict",
+        path="/",
+    )
+    response.delete_cookie(
+        key="refresh_token",
+        secure=settings.https_auth_only,
+        httponly=True,
+        samesite="strict",
+        path="/api/auth/refresh",
+    )
+    return None
 
 
 @router.patch("/me", response_model=models.UserRead)
