@@ -8,6 +8,7 @@ from alembic import command
 from alembic.config import Config as AlembicConfig
 from alembic.util import CommandError
 from sqlalchemy import create_engine, text
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.engine.url import make_url
 from fastapi import FastAPI, Request
 from fastapi.openapi.docs import get_swagger_ui_html
@@ -206,6 +207,14 @@ def run_alembic_startup_workflow() -> None:
             with sync_engine.connect() as conn:
                 _clear_alembic_version(conn)
             sync_engine.dispose()
+        except OperationalError as exc:
+            if "already exists" not in str(exc):
+                raise
+            logger.warning(
+                "Tables already exist but alembic_version is not in sync. "
+                "Stamping DB at current heads and re-syncing..."
+            )
+            command.stamp(cfg, "heads")
         logger.info("Checking for schema changes and autogenerating migration if needed...")
         created = _autogenerate_if_needed(cfg)
         if created:
