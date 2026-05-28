@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { Check } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { useUpdateMeMutation, useChangePasswordMutation } from '../api/authApi'
+import { useUpdateMeMutation, useChangePasswordMutation, useDeleteMeMutation } from '../api/authApi'
 import { useJoinTournamentMutation } from '../api/tournamentApi'
 import { useAppSelector } from '../store/hooks'
 import type { Gender } from '../types'
 import {
+  BtnDanger,
   BtnPrimary,
   BtnSecondary,
   ErrorMsg,
@@ -24,7 +25,8 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
   const user = useAppSelector((state) => state.auth.user)
   const [updateMe, { isLoading: isSaving }] = useUpdateMeMutation()
   const [changePassword, { isLoading: isChangingPassword }] = useChangePasswordMutation()
-  const isLoading = isSaving || isChangingPassword
+  const [deleteMe, { isLoading: isDeleting }] = useDeleteMeMutation()
+  const isLoading = isSaving || isChangingPassword || isDeleting
 
   const [firstName, setFirstName] = useState(user?.first_name ?? '')
   const [lastName, setLastName] = useState(user?.last_name ?? '')
@@ -50,6 +52,21 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
   const showRepeatPassword = newPasswordFilled && !newPasswordConfirmed
   const passwordMismatch = showRepeatPassword
   const canSave = emailConfirmed && newPasswordConfirmed && (!newPasswordFilled || currentPassword.length > 0)
+
+  async function handleDeleteAccount() {
+    const confirmed = window.confirm(
+      'Are you sure you want to permanently delete your account?\n\n' +
+      'This will delete all your predictions and any competition where you are the last admin. ' +
+      'This action cannot be undone.'
+    )
+    if (!confirmed) return
+    try {
+      await deleteMe().unwrap()
+      onClose()
+    } catch {
+      setError('Failed to delete account. Please try again.')
+    }
+  }
 
   async function handleSave() {
     if (!canSave) return
@@ -191,11 +208,16 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
 
         <ErrorMsg msg={error} />
       </ModalBody>
-      <ModalFooter>
-        <BtnSecondary onClick={onClose}>Cancel</BtnSecondary>
-        <BtnPrimary onClick={handleSave} disabled={isLoading || !canSave} loading={isLoading}>
-          {isLoading ? 'Saving…' : 'Save'}
-        </BtnPrimary>
+      <ModalFooter justify="between">
+        <BtnDanger onClick={handleDeleteAccount} disabled={isLoading} loading={isDeleting}>
+          Delete Account
+        </BtnDanger>
+        <div className="flex items-center gap-2">
+          <BtnSecondary onClick={onClose}>Cancel</BtnSecondary>
+          <BtnPrimary onClick={handleSave} disabled={isLoading || !canSave} loading={isSaving || isChangingPassword}>
+            {isSaving || isChangingPassword ? 'Saving…' : 'Save'}
+          </BtnPrimary>
+        </div>
       </ModalFooter>
     </ModalShell>
   )

@@ -12,10 +12,17 @@ import { tournamentApi } from '../api/tournamentApi'
 import { matchApi } from '../api/matchApi'
 import { tournamentPredictionApi, groupPredictionApi, stagePredictionApi, matchPredictionApi } from '../api/predictionApi'
 
-// On successful logout, wipe the entire RTK Query cache so no stale
-// user-specific data remains in the store.
+// On successful logout or account deletion, wipe the entire RTK Query cache
+// so no stale user-specific data remains in the store.
 listenerMiddleware.startListening({
   matcher: authApi.endpoints.logout.matchFulfilled,
+  effect: (_action, listenerApi) => {
+    listenerApi.dispatch(baseApi.util.resetApiState())
+  },
+})
+
+listenerMiddleware.startListening({
+  matcher: authApi.endpoints.deleteMe.matchFulfilled,
   effect: (_action, listenerApi) => {
     listenerApi.dispatch(baseApi.util.resetApiState())
   },

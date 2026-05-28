@@ -187,6 +187,41 @@ async def delete_user(db: AsyncSession, user_id: int) -> Optional[models.User]:
     return user
 
 
+async def delete_account(db: AsyncSession, user_id: int) -> None:
+    """
+    Delete a user account with all associated data.
+
+    Sessions have no DB-level cascade so they are deleted explicitly.
+    Admin links are deleted via the ORM so the after_flush event listener can
+    auto-delete any tournament that loses its last admin.
+    Predictions and participant links carry ondelete="CASCADE" and are removed
+    automatically when the user row is deleted.
+    """
+    from src.tournaments.models import TournamentAdminLink
+
+    sessions = (
+        await db.execute(select(SessionModel).where(SessionModel.user_id == user_id))
+    ).scalars().all()
+    for s in sessions:
+        await db.delete(s)
+
+    admin_links = (
+        await db.execute(
+            select(TournamentAdminLink).where(TournamentAdminLink.user_id == user_id)
+        )
+    ).scalars().all()
+    for link in admin_links:
+        await db.delete(link)
+
+    await db.flush()
+
+    user = await db.get(models.User, user_id)
+    if user:
+        await db.delete(user)
+
+    await db.commit()
+
+
 # ============================================================================
 # Password reset token operations
 # ============================================================================

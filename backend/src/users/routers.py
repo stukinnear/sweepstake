@@ -477,6 +477,41 @@ async def get_current_user_info(
     return current_user
 
 
+@router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_account(
+    response: Response,
+    db: AsyncSession = Depends(get_db),
+    current_user: models.UserRead = Depends(get_current_user),
+):
+    """
+    Permanently delete the authenticated user's account.
+
+    Removes all predictions, withdraws admin/participant memberships, and deletes
+    any competitions where the user was the sole admin. This action is irreversible.
+
+    **Authentication:** Required
+
+    **Returns:** No content (HTTP 204)
+    """
+    await user_crud.delete_account(db, current_user.id)
+    logger.info(f"User {current_user.id} deleted their account")
+    response.delete_cookie(
+        key="access_token",
+        secure=settings.https_auth_only,
+        httponly=True,
+        samesite="strict",
+        path="/",
+    )
+    response.delete_cookie(
+        key="refresh_token",
+        secure=settings.https_auth_only,
+        httponly=True,
+        samesite="strict",
+        path="/api/auth/refresh",
+    )
+    return None
+
+
 @router.patch("/me", response_model=models.UserRead)
 async def update_current_user(
     body: models.UserUpdate,
