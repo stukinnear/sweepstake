@@ -1,4 +1,4 @@
-import time
+import asyncio
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
@@ -149,7 +149,7 @@ async def _send_upcoming_match_reminders() -> None:
                     user.id, tid, len(match_rows),
                 )
 
-                time.sleep(WAIT_TIME_PER_EMAIL)
+                await asyncio.sleep(WAIT_TIME_PER_EMAIL)
 
 
 def build_scheduler() -> AsyncIOScheduler:
