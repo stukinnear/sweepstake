@@ -55,3 +55,4 @@ ENV/
 *.nosync
 */db_migrations/*auto_startup_schema_sync.py
 **/data/*.html
+**/data/football_data_hash_*.txt

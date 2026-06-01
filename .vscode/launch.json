@@ -90,6 +90,23 @@
         },
 
         {
+            "name": "Run update_tournaments task",
+            "type": "debugpy",
+            "request": "launch",
+            "python": "${workspaceFolder}/backend/.venv/bin/python",
+            "program": "${workspaceFolder}/backend/src/api_football_data_org/update_tournament.py",
+            "args": ["2000"],
+            "cwd": "${workspaceFolder}/backend",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/backend",
+                "DATABASE_URL": "postgresql+asyncpg://postgres:postgres@localhost:5432/sweepstake"
+            },
+            "jinja": true,
+            "preLaunchTask": "start-postgres",
+            "postDebugTask": "stop-postgres"
+        },
+
+        {
             "name": "Build & Run Docker Container w/ SQLite (Demo Mode)",
             "type": "node",
             "request": "launch",

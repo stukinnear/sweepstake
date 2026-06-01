@@ -7,6 +7,7 @@ Commands:
   shell                        — interactive shell with DB session and helpers pre-loaded
   welcome_email <t_id> <u_id>  — send (or re-send) the welcome email for a tournament/user pair
   upcoming_reminders           — immediately run the upcoming-matches reminder job (normally fires at 15:00)
+  update_tournament [t_id]     — import/refresh match data from football-data.org (all if no ID given)
   promote_superuser <u_id>     — grant superuser privileges to a user (use --demote to revoke)
 """
 import argparse
@@ -25,6 +26,7 @@ from src.tournaments.crud import get_tournament_by_id
 from src.users.crud import get_user_by_id, get_user_by_email, update_user
 from src.users.models import UserUpdate
 from src.emails.welcome_email import send_competition_welcome_email
+from src.api_football_data_org.update_tournament import update_tournaments
 
 
 # ---------------------------------------------------------------------------
@@ -80,6 +82,41 @@ async def _cmd_promote_superuser(user_id: int, *, demote: bool = False) -> None:
 
 
 # ---------------------------------------------------------------------------
+# update_tournament
+# ---------------------------------------------------------------------------
+
+async def _cmd_update_tournament(tournament_id: int | None = None) -> None:
+    from sqlalchemy import select
+    from src.tournaments.models import Tournament
+
+    async with AsyncSessionLocal() as db:
+        if tournament_id is not None:
+            tournament = await get_tournament_by_id(db, tournament_id)
+            if tournament is None:
+                print(f"Error: tournament {tournament_id} not found.", file=sys.stderr)
+                sys.exit(1)
+            if not tournament.football_data_org_id:
+                print(f"Error: tournament {tournament_id} has no football_data_org_id set.", file=sys.stderr)
+                sys.exit(1)
+            football_data_org_ids = [tournament.football_data_org_id]
+        else:
+            result = await db.execute(
+                select(Tournament.football_data_org_id)
+                .where(Tournament.football_data_org_id.is_not(None))
+                .distinct()
+            )
+            football_data_org_ids = result.scalars().all()
+            if not football_data_org_ids:
+                print("No tournaments with a football_data_org_id found.", file=sys.stderr)
+                sys.exit(1)
+
+        for fdo_id in football_data_org_ids:
+            print(f"Fetching match data for football-data.org ID {fdo_id}…")
+            await update_tournaments(db, fdo_id)
+        print("Done.")
+
+
+# ---------------------------------------------------------------------------
 # upcoming_reminders
 # ---------------------------------------------------------------------------
 
@@ -124,6 +161,8 @@ Custom queries:
 Management commands:
   welcome_email(tournament_id, user_id)
   upcoming_reminders()                      run the upcoming-matches reminder job now
+  update_tournament()                        import/refresh all tournaments from football-data.org
+  update_tournament(tournament_id)           import/refresh one tournament from football-data.org
   promote_superuser(user_id)                grant superuser privileges to a user
   promote_superuser(user_id, demote=True)   revoke superuser privileges from a user
 """
@@ -192,6 +231,10 @@ async def _cmd_shell() -> None:
             """Run the upcoming-matches reminder job now: upcoming_reminders()"""
             run(_cmd_upcoming_reminders())
 
+        def update_tournament(tournament_id: int | None = None) -> None:
+            """Import/refresh match data from football-data.org: update_tournament() or update_tournament(tournament_id)"""
+            run(_cmd_update_tournament(tournament_id))
+
         def promote_superuser(user_id: int, *, demote: bool = False) -> None:
             """Grant (or revoke) superuser privileges: promote_superuser(user_id) / promote_superuser(user_id, demote=True)"""
             run(_cmd_promote_superuser(user_id, demote=demote))
@@ -208,6 +251,7 @@ async def _cmd_shell() -> None:
             # management commands
             "welcome_email": welcome_email,
             "upcoming_reminders": upcoming_reminders,
+            "update_tournament": update_tournament,
             "promote_superuser": promote_superuser,
             # ad-hoc query building
             "select": select,
@@ -250,6 +294,9 @@ def main() -> None:
 
     sub.add_parser("upcoming_reminders", help="Run the upcoming-matches reminder job now (normally fires at 15:00)")
 
+    p = sub.add_parser("update_tournament", help="Import/refresh match data from football-data.org (all tournaments, or one by ID)")
+    p.add_argument("tournament_id", type=int, nargs="?", default=None, help="Tournament ID (omit to update all)")
+
     p = sub.add_parser("promote_superuser", help="Grant (or revoke) superuser privileges for a user")
     p.add_argument("user_id", type=int, help="User ID")
     p.add_argument("--demote", action="store_true", default=False, help="Revoke superuser privileges instead")
@@ -262,6 +309,8 @@ def main() -> None:
         asyncio.run(_cmd_welcome_email(args.tournament_id, args.user_id))
     elif args.command == "upcoming_reminders":
         asyncio.run(_cmd_upcoming_reminders())
+    elif args.command == "update_tournament":
+        asyncio.run(_cmd_update_tournament(args.tournament_id))
     elif args.command == "promote_superuser":
         asyncio.run(_cmd_promote_superuser(args.user_id, demote=args.demote))
 

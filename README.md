@@ -166,6 +166,8 @@ SweepStake shell  (type exit() or Ctrl-D to quit)
 
 >>> welcome_email(tournament_id, user_id)        # trigger a management command from the shell
 >>> upcoming_reminders()                          # run the upcoming-matches reminder job now
+>>> update_tournament()                           # import/refresh all tournaments from football-data.org
+>>> update_tournament(tournament_id)              # import/refresh one tournament from football-data.org
 >>> promote_superuser(user_id)                    # grant superuser privileges to a user
 >>> promote_superuser(user_id, demote=True)       # revoke superuser privileges
 ```
@@ -183,6 +185,8 @@ For custom queries use `run()` to execute any coroutine:
 # One-liner without entering the container
 docker exec sweepstake-app bash -c "cd /app/backend && /venv/bin/python /app/backend/src/manage.py welcome_email 42 7"
 docker exec sweepstake-app bash -c "cd /app/backend && /venv/bin/python /app/backend/src/manage.py upcoming_reminders"
+docker exec sweepstake-app bash -c "cd /app/backend && /venv/bin/python /app/backend/src/manage.py update_tournament"
+docker exec sweepstake-app bash -c "cd /app/backend && /venv/bin/python /app/backend/src/manage.py update_tournament 1"
 docker exec sweepstake-app bash -c "cd /app/backend && /venv/bin/python /app/backend/src/manage.py promote_superuser 42"
 docker exec sweepstake-app bash -c "cd /app/backend && /venv/bin/python /app/backend/src/manage.py promote_superuser 42 --demote"
 ```

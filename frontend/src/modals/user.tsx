@@ -229,12 +229,12 @@ export function JoinTournamentModal({ onClose, initialCode }: { onClose: () => v
   const [joinCode, setJoinCode] = useState(initialCode ?? '')
   const [error, setError] = useState<string | null>(null)
 
-  const JOIN_CODE_RE = /^[A-Za-z]{0,8}\d{8,}$/
+  const JOIN_CODE_RE = /^[A-Za-z0-9]{0,8}\d{8}$/
 
   function validateJoinCode(code: string): string | null {
     if (!code) return 'Please enter a join code.'
-    if (code.length > 16) return 'Join code must be 16 characters or fewer.'
-    if (!JOIN_CODE_RE.test(code)) return 'Join code must be 0–8 letters followed by at least 8 digits, with no spaces or special characters.'
+    if (code.length < 8 || code.length > 16) return 'Join code must be 8–16 characters.'
+    if (!JOIN_CODE_RE.test(code)) return 'Join code must be 0–8 alphanumeric characters followed by exactly 8 digits, with no spaces or special characters.'
     return null
   }
 
