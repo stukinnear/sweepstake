@@ -1,0 +1,72 @@
+{% extends "base_email.html" %}
+
+{% block title %}Payment Reminder: {{ tournament_name }} – SweepStake{% endblock %}
+
+{% block content %}
+
+<!-- ── Greeting ── -->
+<p style="margin:0 0 24px 0;color:#374151;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;mso-line-height-rule:exactly;">
+  Hi {{ first_name }},<br><br>
+  Kind reminder to please transfer the stake for the <strong>{{ tournament_name }}</strong> SweepStake competition.
+</p>
+
+<!-- ── Entry stake ── -->
+<table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
+       style="border-collapse:collapse;margin:0 0 28px 0;">
+  <tr>
+    <td style="background-color:#fffbeb;border-left:4px solid #f59e0b;padding:14px 18px;">
+      <p style="margin:0 0 6px 0;color:#92400e;font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;line-height:1.4;mso-line-height-rule:exactly;">
+        Entry Stake
+      </p>
+      <p style="margin:0;color:#78350f;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.7;mso-line-height-rule:exactly;">
+        {{ stake }}
+      </p>
+    </td>
+  </tr>
+</table>
+
+<!-- ── Call to action ── -->
+<p style="margin:0 0 24px 0;color:#374151;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;mso-line-height-rule:exactly;">
+  In case you have already transferred the stake, please reply to this email to confirm your payment.
+</p>
+
+<!-- Button -->
+<table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
+       style="border-collapse:collapse;margin:0 0 28px 0;">
+  <tr>
+    <td align="center">
+      <!--[if mso]>
+      <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word"
+                   href="{{ tournament_url }}"
+                   style="height:44px;v-text-anchor:middle;width:220px;"
+                   arcsize="11%" strokecolor="#1d4ed8" fillcolor="#001440">
+        <w:anchorlock/>
+        <center style="color:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;">
+          Go to Competition
+        </center>
+      </v:roundrect>
+      <![endif]--><!--[if !mso]><!-->
+      <a href="{{ tournament_url }}"
+         style="background-color:#001440;border-radius:6px;color:#ffffff;display:inline-block;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;padding:12px 32px;text-align:center;text-decoration:none;-webkit-text-size-adjust:none;">
+        Go to Competition
+      </a>
+      <!--<![endif]-->
+    </td>
+  </tr>
+</table>
+
+<!-- ── Sign-off ── -->
+<p style="margin:0;color:#374151;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;mso-line-height-rule:exactly;">
+  Best regards,<br>
+  <strong style="color:#111827;font-family:Arial,Helvetica,sans-serif;">{{ admin_sign_off }}</strong>
+</p>
+
+{% endblock %}
+
+{% block footer_note %}
+  You received this email because you joined the <strong>{{ tournament_name }}</strong> competition on SweepStake.
+  {% if admin_footer %}
+  <br><strong>Organised by:</strong>
+  {% for a in admin_footer %}{{ a.full_name }} ({{ a.email }}){% if not loop.last %}, {% endif %}{% endfor %}
+  {% endif %}
+{% endblock %}

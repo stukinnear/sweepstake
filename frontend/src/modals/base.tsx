@@ -193,17 +193,23 @@ export function BtnPrimary({
 
 export function BtnSecondary({
   onClick,
+  disabled,
+  loading,
   children,
 }: {
   onClick?: () => void
+  disabled?: boolean
+  loading?: boolean
   children: React.ReactNode
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="rounded-full border border-gray-300 dark:border-gray-600 px-4 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+      disabled={disabled || loading}
+      className="inline-flex items-center gap-1.5 rounded-full border border-gray-300 dark:border-gray-600 px-4 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 transition"
     >
+      {loading && <Loader2 className="animate-spin h-3.5 w-3.5" />}
       {children}
     </button>
   )

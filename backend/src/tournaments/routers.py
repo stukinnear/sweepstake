@@ -1,5 +1,6 @@
 """Tournament management routes: create, read, update, delete operations."""
 
+import asyncio
 from fastapi import APIRouter, BackgroundTasks, Depends, Response, status, Path, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,7 +13,12 @@ from src.tournaments import crud, models
 from src.users.routers import verify_access_token
 from src.users.crud import get_user_by_id
 from src.emails.welcome_email import send_competition_welcome_email
+from src.emails.payment_reminder_email import send_payment_reminder_email
+from src.api_football_data_org.import_tournament import import_tournament
 from src.config import settings
+from src.logging_config import get_logger
+
+logger = get_logger(__name__)
 
 router = APIRouter(prefix="/tournament", tags=["tournament"])
 
@@ -282,6 +288,188 @@ async def join_tournament_endpoint(
                 user_id=user_id,
             )
     return tournament
+
+
+_TIME_BUDGET_EMAILS_MINUTES = 30
+_MIN_EMAIL_GAP_SECONDS = 10
+_MAX_EMAIL_GAP_SECONDS = 30
+
+
+def _email_wait(n: int) -> float:
+    """Seconds to sleep between emails so n emails spread over the budget window."""
+    per_email = _TIME_BUDGET_EMAILS_MINUTES * 60 / max(n, 1)
+    return max(_MIN_EMAIL_GAP_SECONDS, min(per_email, _MAX_EMAIL_GAP_SECONDS))
+
+
+async def _bulk_send_payment_reminders(
+    recipients: list[dict],
+    stake: str,
+    tournament_name: str,
+    tournament_id: int,
+    requesting_admin: dict,
+    all_admins: list[dict],
+    wait_seconds: float,
+) -> None:
+    logger.info(
+        "Payment reminder task started | tournament_id=%s tournament=%r recipients=%d gap=%.0fs",
+        tournament_id, tournament_name, len(recipients), wait_seconds,
+    )
+    for r in recipients:
+        await send_payment_reminder_email(
+            to_email=r["email"],
+            first_name=r["first_name"],
+            tournament_name=tournament_name,
+            tournament_id=tournament_id,
+            stake=stake,
+            admin=requesting_admin,
+            all_admins=all_admins,
+            user_id=r["user_id"],
+        )
+        await asyncio.sleep(wait_seconds)
+    logger.info(
+        "Payment reminder task finished | tournament_id=%s sent=%d",
+        tournament_id, len(recipients),
+    )
+
+
+async def _bulk_send_welcome_emails(
+    recipients: list[dict],
+    tournament_name: str,
+    tournament_id: int,
+    stake,
+    match_winner_points,
+    match_score_points,
+    group_winner_points,
+    stage_winner_points,
+    first_place_points,
+    second_place_points,
+    third_place_points,
+    requesting_admin: dict,
+    wait_seconds: float,
+) -> None:
+    logger.info(
+        "Welcome email task started | tournament_id=%s tournament=%r recipients=%d gap=%.0fs",
+        tournament_id, tournament_name, len(recipients), wait_seconds,
+    )
+    for r in recipients:
+        await send_competition_welcome_email(
+            to_email=r["email"],
+            first_name=r["first_name"],
+            tournament_name=tournament_name,
+            tournament_id=tournament_id,
+            stake=stake,
+            match_winner_points=match_winner_points,
+            match_score_points=match_score_points,
+            group_winner_points=group_winner_points,
+            stage_winner_points=stage_winner_points,
+            first_place_points=first_place_points,
+            second_place_points=second_place_points,
+            third_place_points=third_place_points,
+            admins=[requesting_admin],
+            user_id=r["user_id"],
+        )
+        await asyncio.sleep(wait_seconds)
+    logger.info(
+        "Welcome email task finished | tournament_id=%s sent=%d",
+        tournament_id, len(recipients),
+    )
+
+
+@router.post("/{tournament_id}/action", status_code=status.HTTP_204_NO_CONTENT)
+async def tournament_admin_action_endpoint(
+    body: models.TournamentAdminActionRequest,
+    background_tasks: BackgroundTasks,
+    tournament_id: int = Path(..., description="Unique tournament identifier", gt=0),
+    db: AsyncSession = Depends(get_db),
+    token_payload: dict = Depends(verify_access_token),
+):
+    """
+    Perform an admin action on a tournament (admins only).
+
+    - **tournament_id**: The unique identifier of the tournament
+    - **action**: One of:
+      - `send-payment-reminder` — email all participants whose stake is unpaid
+      - `update-tournament` — re-import schedule and results from football-data.org (requires `football_data_org_id`)
+      - `send-welcome-email` — re-send the welcome email to all participants
+
+    Returns 204 No Content on success.
+    """
+    user_id = token_payload["uid"]
+    if not await crud.is_admin(db, tournament_id, user_id):
+        raise CustomError("Forbidden: only admins can perform tournament actions", status_code=403)
+    tournament = await crud.get_tournament_by_id(db, tournament_id)
+    if not tournament:
+        raise CustomError("Tournament not found", status_code=404)
+
+    requesting_user = await get_user_by_id(db, user_id)
+    requesting_admin = {
+        "first_name": requesting_user.first_name,
+        "last_name": requesting_user.last_name,
+        "email": requesting_user.email,
+    } if requesting_user else {}
+
+    all_admins = [
+        {"first_name": a.first_name, "last_name": a.last_name, "email": a.email}
+        for a in tournament.admins
+    ]
+
+    if body.action == models.TournamentAdminAction.send_payment_reminder:
+        if not tournament.stake:
+            raise CustomError("This tournament has no stake configured", status_code=400)
+        stake_paid_map = {link.user_id: link.stake_paid for link in tournament.participant_links}
+        recipients = [
+            {"email": u.email, "first_name": u.first_name, "user_id": u.id}
+            for u in tournament.participants
+            if not stake_paid_map.get(u.id, False)
+        ]
+        background_tasks.add_task(
+            _bulk_send_payment_reminders,
+            recipients=recipients,
+            stake=tournament.stake,
+            tournament_name=tournament.name,
+            tournament_id=tournament.id,
+            requesting_admin=requesting_admin,
+            all_admins=all_admins,
+            wait_seconds=_email_wait(len(recipients)),
+        )
+
+    elif body.action == models.TournamentAdminAction.update_tournament:
+        if not tournament.football_data_org_id:
+            raise CustomError("This tournament has no football-data.org ID configured", status_code=400)
+        background_tasks.add_task(
+            import_tournament,
+            db,
+            tournament.football_data_org_id,
+            tournament,
+        )
+
+    elif body.action == models.TournamentAdminAction.send_welcome_email:
+        recipients = [
+            {"email": u.email, "first_name": u.first_name, "user_id": u.id}
+            for u in tournament.participants
+        ]
+        background_tasks.add_task(
+            _bulk_send_welcome_emails,
+            recipients=recipients,
+            tournament_name=tournament.name,
+            tournament_id=tournament.id,
+            stake=tournament.stake,
+            match_winner_points=tournament.match_winner_points,
+            match_score_points=tournament.match_score_points,
+            group_winner_points=tournament.group_winner_points,
+            stage_winner_points=tournament.stage_winner_points,
+            first_place_points=tournament.first_place_points,
+            second_place_points=tournament.second_place_points,
+            third_place_points=tournament.third_place_points,
+            requesting_admin=requesting_admin,
+            wait_seconds=_email_wait(len(recipients)),
+        )
+
+    logger.info(
+        "Admin action triggered | action=%s tournament_id=%s tournament=%r by user_id=%s",
+        body.action, tournament_id, tournament.name, user_id,
+    )
+    return None
 
 
 @router.delete("/leave/{tournament_id}", status_code=status.HTTP_204_NO_CONTENT)

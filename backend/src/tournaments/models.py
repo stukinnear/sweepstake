@@ -112,6 +112,17 @@ class MemberAction(str, Enum):
     remove = "remove"
 
 
+class TournamentAdminAction(str, Enum):
+    send_payment_reminder = "send-payment-reminder"
+    update_tournament = "update-tournament"
+    send_welcome_email = "send-welcome-email"
+
+
+class TournamentAdminActionRequest(SQLModel):
+    """Body for POST /tournament/{id}/action."""
+    action: TournamentAdminAction = Field(..., description="Admin action to perform")
+
+
 class TournamentMemberUpdate(SQLModel):
     """Body for PATCH /tournament/{id}/members."""
     user_id: int = Field(..., description="ID of the user to add or remove", gt=0)
