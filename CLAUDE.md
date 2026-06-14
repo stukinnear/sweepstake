@@ -19,7 +19,7 @@
 - **Model changes — cascade review:** Whenever a `models.py` file is changed (fields added/removed/renamed, types changed, relationships altered), always review the corresponding `crud.py` and `routers.py` in that same domain module and update them as needed. Also update the frontend TypeScript types and RTK Query endpoints. Do not leave any layer inconsistent with the model.
 - **CRUD:** Use `selectinload` for relationships (avoid N+1). Call `db.flush()` before accessing auto-generated IDs. Encapsulate reusable filters in a `_query_x()` helper.
 - **Never hand-write Alembic migrations.** Change SQLModel definitions instead — the startup workflow autogenerates and applies migrations via the volume at `/app/data/db_migrations`.
-- All runtime config lives in `backend/src/config.py` as `SERVER_*` env vars. Add new behavior there, not as hardcoded values.
+- All runtime config lives in `backend/src/config.py`. Env vars match the uppercase field name (e.g. `SECRET_KEY`, `DATABASE_URL`). Add new behavior there, not as hardcoded values.
 
 ## Frontend
 - Functional components, typed Redux hooks (`useAppSelector`/`useAppDispatch`), RTK Query for all server data — never use raw `fetch()`.
@@ -27,10 +27,11 @@
 - Reuse existing tag types for cache invalidation; do not invent new tag strings.
 - **Type sync with backend models:** Whenever backend models or API schemas change, update the corresponding TypeScript types and RTK Query endpoint definitions in `frontend/src/` to match. Keep request/response types in sync; do not leave stale field names or missing fields in the frontend types.
 - Tailwind-only styling. Respect OS light/dark mode — no custom theme toggle unless explicitly requested.
+- **Icons:** Always use `lucide-react` for icons. Never write inline SVG or hardcode `<path>` elements.
 - Fully responsive: iPhone 12 portrait → 4K landscape. Cap content width on wide screens.
 
 ## Deployment
-- nginx serves the SPA, proxies `/api/` → `127.0.0.1:8888` (gunicorn). FastAPI requires `SERVER_ROOT_PATH=/api`.
+- nginx serves the SPA, proxies `/api/` → `127.0.0.1:8888` (gunicorn). FastAPI requires `ROOT_PATH=/api`.
 - Multi-stage Docker build: Node stage builds frontend assets; Python deps install into `/venv`; runtime image stays slim.
 - All environment differences (dev / compose / prod) belong in env vars, not in application code.
 

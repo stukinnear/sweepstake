@@ -18,6 +18,42 @@ export function MatchStatsModal({
   onClose: () => void
 }) {
   const { data: stats, isLoading, error } = useGetMatchStatsQuery(matchId)
+  const homeWins =
+    stats?.home_goals != null &&
+    stats?.away_goals != null &&
+    stats.home_goals >= stats.away_goals
+  const predictions = stats?.predictions
+    .map((p) => ({
+      ...p,
+      winner:
+        p.home_score != null && p.away_score != null
+          ? p.home_score > p.away_score
+            ? 1
+            : p.home_score < p.away_score
+              ? -1
+              : 0
+          : null,
+      winner_score:
+        p.home_score != null && p.away_score != null
+          ? p.home_score >= p.away_score
+            ? p.home_score
+            : p.away_score
+          : null,
+      loser_score:
+        p.home_score != null && p.away_score != null
+          ? p.home_score < p.away_score
+            ? p.home_score
+            : p.away_score
+          : null,
+    }))
+    .sort((a, b) =>
+      (homeWins
+        ? (a.winner ?? Infinity) - (b.winner ?? Infinity)
+        : (b.winner ?? -Infinity) - (a.winner ?? -Infinity)) ||
+      (b.winner_score ?? -1) - (a.winner_score ?? -1) ||
+      (a.loser_score ?? Infinity) - (b.loser_score ?? Infinity)
+    )
+  console.log('debug prediction sorting', predictions)
   const navigate = useNavigate()
   const currentUserId = useAppSelector((state) => state.auth.user?.id)
 
@@ -26,7 +62,7 @@ export function MatchStatsModal({
 
   return (
     <ModalShell title={`${homeTeam} vs ${awayTeam}`} onClose={onClose} maxWidth="max-w-lg">
-      <ModalBody scrollable>
+      <ModalBody>
         {isLoading && (
           <p className="text-sm text-gray-500 dark:text-gray-400">Loading stats…</p>
         )}
@@ -34,8 +70,8 @@ export function MatchStatsModal({
           <p className="text-sm text-red-500 dark:text-red-400">Failed to load match stats.</p>
         )}
         {stats && (
-          <div className="space-y-5">
-            <div className="text-center py-1">
+          <div className="flex flex-col gap-5 max-h-[65vh]">
+            <div className="text-center py-1 flex-shrink-0">
               <span className="text-3xl font-bold font-mono text-gray-900 dark:text-gray-100">
                 {stats.home_goals != null && stats.away_goals != null
                   ? `${stats.home_goals} – ${stats.away_goals}`
@@ -49,13 +85,14 @@ export function MatchStatsModal({
               )}
             </div>
 
-            {stats.predictions.length === 0 ? (
+            {(predictions ?? []).length === 0 ? (
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 No predictions were made for this match.
               </p>
             ) : (
+              <div className="overflow-y-auto flex-1 min-h-0">
               <table className="w-full text-sm">
-                <thead>
+                <thead className="sticky top-0 bg-white dark:bg-gray-900">
                   <tr className="border-b border-gray-200 dark:border-gray-700">
                     <th className="text-left pb-2 font-medium text-gray-500 dark:text-gray-400">
                       Player
@@ -69,10 +106,7 @@ export function MatchStatsModal({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50">
-                  {stats.predictions
-                    .slice()
-                    .sort((a, b) => (b.points_earned ?? -1) - (a.points_earned ?? -1))
-                    .map((p) => (
+                  {(predictions ?? []).map((p) => (
                       <tr
                         key={p.user_id}
                         onClick={() => {
@@ -108,6 +142,7 @@ export function MatchStatsModal({
                     ))}
                 </tbody>
               </table>
+              </div>
             )}
           </div>
         )}

@@ -12,6 +12,7 @@ from src.tournaments.models import Tournament
 from src.database import AsyncSessionLocal
 from src.teams import models as team_models
 from src.matches.models import Match
+from src.predictions import scoring as predictions_scoring
 from src.config import settings
 from src.logging_config import get_logger
 
@@ -48,6 +49,8 @@ async def update_tournaments(db: AsyncSession, football_data_org_id: int) -> Non
         .where(Tournament.football_data_org_id == football_data_org_id)
     )
     tournament_ids = tournament_ids.scalars().all()
+
+    match_ids_to_rescore: list[int] = []
 
     for match in past_matches + upcoming_matches:
         match_football_data_org_id = match["id"]
@@ -86,6 +89,8 @@ async def update_tournaments(db: AsyncSession, football_data_org_id: int) -> Non
             matched_match.start_datetime = start_datetime
             matched_match.home_goals = home_goals
             matched_match.away_goals = away_goals
+            if home_goals is not None and away_goals is not None:
+                match_ids_to_rescore.append(matched_match.id)
 
             matched_home_team = await db.execute(
                 select(team_models.Team)
@@ -157,6 +162,9 @@ async def update_tournaments(db: AsyncSession, football_data_org_id: int) -> Non
             db.add(new_match)
 
             logger.info("Added new match for tournament %s (%s): %s vs %s on %s", tournament_id, football_data_org_id, home_team["name"], away_team["name"], start_datetime)
+
+    for match_id in match_ids_to_rescore:
+        await predictions_scoring.recalculate_match_points(db, match_id)
 
     await db.commit()
 
