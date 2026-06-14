@@ -47,10 +47,13 @@ export function MatchStatsModal({
           : null,
     }))
     .sort((a, b) =>
+      // 1. winner: asc if home wins (closest to correct winner first), desc if away wins; nulls last
       (homeWins
-        ? (a.winner ?? Infinity) - (b.winner ?? Infinity)
-        : (b.winner ?? -Infinity) - (a.winner ?? -Infinity)) ||
+        ? (b.winner ?? Infinity) - (a.winner ?? Infinity)
+        : (a.winner ?? -Infinity) - (b.winner ?? -Infinity)) ||
+      // 2. winner_score: desc (higher winning score first); nulls last
       (b.winner_score ?? -1) - (a.winner_score ?? -1) ||
+      // 3. loser_score: asc (lower losing score first); nulls last
       (a.loser_score ?? Infinity) - (b.loser_score ?? Infinity)
     )
   console.log('debug prediction sorting', predictions)
