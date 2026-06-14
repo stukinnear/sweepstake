@@ -9,6 +9,7 @@ Commands:
   upcoming_reminders           — immediately run the upcoming-matches reminder job (normally fires at 15:00)
   update_tournament [t_id]     — import/refresh match data from football-data.org (all if no ID given)
   promote_superuser <u_id>     — grant superuser privileges to a user (use --demote to revoke)
+  recalculate_points [t_id]    — recalculate all prediction points (match/group/stage/tournament) for all or one tournament
 """
 import argparse
 import asyncio
@@ -27,6 +28,7 @@ from src.users.crud import get_user_by_id, get_user_by_email, update_user
 from src.users.models import UserUpdate
 from src.emails.welcome_email import send_competition_welcome_email
 from src.api_football_data_org.update_tournament import update_tournaments
+from src.predictions import scoring as predictions_scoring
 
 
 # ---------------------------------------------------------------------------
@@ -117,6 +119,38 @@ async def _cmd_update_tournament(tournament_id: int | None = None) -> None:
 
 
 # ---------------------------------------------------------------------------
+# recalculate_points
+# ---------------------------------------------------------------------------
+
+async def _cmd_recalculate_points(tournament_id: int | None = None) -> None:
+    from sqlalchemy import select
+    from src.tournaments.models import Tournament
+
+    async with AsyncSessionLocal() as db:
+        if tournament_id is not None:
+            tournament = await get_tournament_by_id(db, tournament_id)
+            if tournament is None:
+                print(f"Error: tournament {tournament_id} not found.", file=sys.stderr)
+                sys.exit(1)
+            tournament_ids = [tournament_id]
+        else:
+            result = await db.execute(select(Tournament.id))
+            tournament_ids = result.scalars().all()
+            if not tournament_ids:
+                print("No tournaments found.", file=sys.stderr)
+                sys.exit(1)
+
+        for tid in tournament_ids:
+            print(f"Recalculating points for tournament {tid}…")
+            await predictions_scoring.recalculate_all_match_points_for_tournament(db, tid)
+            await predictions_scoring.recalculate_all_group_points_for_tournament(db, tid)
+            await predictions_scoring.recalculate_all_stage_points_for_tournament(db, tid)
+            await predictions_scoring.recalculate_tournament_points(db, tid)
+        await db.commit()
+    print("Done.")
+
+
+# ---------------------------------------------------------------------------
 # upcoming_reminders
 # ---------------------------------------------------------------------------
 
@@ -165,6 +199,8 @@ Management commands:
   update_tournament(tournament_id)           import/refresh one tournament from football-data.org
   promote_superuser(user_id)                grant superuser privileges to a user
   promote_superuser(user_id, demote=True)   revoke superuser privileges from a user
+  recalculate_points()                      recalculate all prediction points for all tournaments
+  recalculate_points(tournament_id)         recalculate all prediction points for one tournament
 """
 
 
@@ -239,6 +275,10 @@ async def _cmd_shell() -> None:
             """Grant (or revoke) superuser privileges: promote_superuser(user_id) / promote_superuser(user_id, demote=True)"""
             run(_cmd_promote_superuser(user_id, demote=demote))
 
+        def recalculate_points(tournament_id: int | None = None) -> None:
+            """Recalculate all prediction points: recalculate_points() or recalculate_points(tournament_id)"""
+            run(_cmd_recalculate_points(tournament_id))
+
         namespace = {
             "db": db,
             "run": run,
@@ -253,6 +293,7 @@ async def _cmd_shell() -> None:
             "upcoming_reminders": upcoming_reminders,
             "update_tournament": update_tournament,
             "promote_superuser": promote_superuser,
+            "recalculate_points": recalculate_points,
             # ad-hoc query building
             "select": select,
             "User": User,
@@ -301,6 +342,9 @@ def main() -> None:
     p.add_argument("user_id", type=int, help="User ID")
     p.add_argument("--demote", action="store_true", default=False, help="Revoke superuser privileges instead")
 
+    p = sub.add_parser("recalculate_points", help="Recalculate all prediction points (match/group/stage/tournament) for all or one tournament")
+    p.add_argument("tournament_id", type=int, nargs="?", default=None, help="Tournament ID (omit to recalculate all)")
+
     args = parser.parse_args()
 
     if args.command == "shell":
@@ -313,6 +357,8 @@ def main() -> None:
         asyncio.run(_cmd_update_tournament(args.tournament_id))
     elif args.command == "promote_superuser":
         asyncio.run(_cmd_promote_superuser(args.user_id, demote=args.demote))
+    elif args.command == "recalculate_points":
+        asyncio.run(_cmd_recalculate_points(args.tournament_id))
 
 
 if __name__ == "__main__":
