@@ -16,6 +16,7 @@ from src.predictions.crud import (
     get_stage_start_datetime,
     get_tournament_start_datetime,
 )
+from src.tournaments.crud import is_admin
 from src.users.routers import verify_access_token
 
 router = APIRouter(prefix="/stats", tags=["stats"])
@@ -211,3 +212,29 @@ async def get_tournament_stats_endpoint(
     start_dt = await get_tournament_start_datetime(db, tournament_id)
     _require_started(start_dt)
     return await crud.get_tournament_stats(db, tournament_id)
+
+
+@router.get("/participant-activity/{tournament_id}", response_model=List[models.ParticipantActivityEntry])
+async def get_participant_activity_endpoint(
+    tournament_id: int = Path(..., description="Tournament ID", gt=0),
+    db: AsyncSession = Depends(get_db),
+    token_payload: dict = Depends(verify_access_token),
+):
+    """
+    Prediction counts per participant, visible to tournament admins only.
+
+    Returns one entry per participant showing how many predictions they have submitted
+    across all four prediction types: tournament-winner, group-winner, stage-winner,
+    and match-score. Useful for admins monitoring participation.
+
+    - **tournament_id**: ID of the tournament
+
+    Returns **403** if the caller is not a tournament admin.
+    """
+    uid = token_payload["uid"]
+    if not await is_admin(db, tournament_id, uid):
+        raise CustomError(
+            "Forbidden: only tournament admins can view participant activity",
+            status_code=403,
+        )
+    return await crud.get_participant_activity(db, tournament_id)

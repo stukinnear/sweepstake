@@ -95,3 +95,14 @@ class TournamentStatsRead(SQLModel):
     third_place_team_id: Optional[int] = None
     third_place_team: Optional[TeamRead] = None
     predictions: List[WinnerPredictionGroup]
+
+
+class ParticipantActivityEntry(SQLModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    user_id: int
+    user_name: Optional[str] = None
+    tournament_predictions: int
+    group_predictions: int
+    stage_predictions: int
+    match_predictions: int

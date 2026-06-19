@@ -67,3 +67,12 @@ export interface TournamentStats {
   third_place_team: TeamRead | null
   predictions: WinnerPredictionGroup[]
 }
+
+export interface ParticipantActivity {
+  user_id: number
+  user_name: string | null
+  tournament_predictions: number
+  group_predictions: number
+  stage_predictions: number
+  match_predictions: number
+}

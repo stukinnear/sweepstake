@@ -9,6 +9,7 @@ import {
   useSetStakePaidMutation,
   useSendAdminActionMutation,
 } from '../api/tournamentApi'
+import { useGetParticipantActivityQuery } from '../api/statsApi'
 import type { TournamentAdminAction } from '../types'
 import { useListFootballDataOrgTournamentsQuery } from '../api/footballDataOrgApi'
 import { useListTeamsQuery } from '../api/teamApi'
@@ -352,6 +353,8 @@ export function EditTournamentModal({
   const [manageMember] = useManageTournamentMemberMutation()
   const [setStakePaid] = useSetStakePaidMutation()
   const [sendAdminAction, { isLoading: isActionLoading }] = useSendAdminActionMutation()
+  const { data: participantActivity = [] } = useGetParticipantActivityQuery(tournament.id)
+  const activityMap = Object.fromEntries(participantActivity.map((a) => [a.user_id, a]))
   const [currentAction, setCurrentAction] = useState<TournamentAdminAction | null>(null)
   const isLoading = isSaving || isDeleting
 
@@ -572,14 +575,16 @@ export function EditTournamentModal({
           <ul className="space-y-1">
             {tournament.participant_lst.map((p) => {
               const participantIsAdmin = tournament.admin_lst.some((a) => a.id === p.id)
+              const activity = activityMap[p.id]
               return (
                 <li
                   key={p.id}
-                  className="flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/60 px-3 py-2"
+                  className="group rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/60 px-3 py-2"
                 >
-                  <span className="flex-1 min-w-0 text-sm text-gray-800 dark:text-gray-200 truncate">
-                    {p.user_name ?? `User #${p.id}`}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="flex-1 min-w-0 text-sm text-gray-800 dark:text-gray-200 truncate">
+                      {p.user_name ?? `User #${p.id}`}
+                    </span>
                   {participantIsAdmin && (
                     <span className="flex-shrink-0 rounded-full bg-blue-100 dark:bg-blue-900/60 px-1.5 py-0.5 text-xs font-medium text-blue-700 dark:text-blue-300">
                       admin
@@ -621,6 +626,15 @@ export function EditTournamentModal({
                   >
                     <UserX size={14} />
                   </button>
+                  </div>
+                  {activity && (
+                    <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-0.5 hidden group-hover:flex">
+                      <span className="text-xs text-gray-500 dark:text-gray-400">🏆 Tournament: {activity.tournament_predictions}</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">🏅 Stage: {activity.stage_predictions}</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">👥 Group: {activity.group_predictions}</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">⚽ Match: {activity.match_predictions}</span>
+                    </div>
+                  )}
                 </li>
               )
             })}

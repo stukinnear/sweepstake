@@ -19,4 +19,5 @@ export type {
   GroupStats,
   StageStats,
   TournamentStats,
+  ParticipantActivity,
 } from './stats'

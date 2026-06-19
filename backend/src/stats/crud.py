@@ -11,6 +11,7 @@ from src.stats.models import (
     GroupStatsRead,
     LeaderboardEntry,
     MatchStatsRead,
+    ParticipantActivityEntry,
     StageStatsRead,
     TournamentStatsRead,
     UserPredictionMatch,
@@ -235,3 +236,71 @@ async def get_tournament_stats(db: AsyncSession, tournament_id: int) -> Tourname
         third_place_team=_team(tournament.third_place),
         predictions=_group_by_winner(preds, user_map),
     )
+
+
+async def get_participant_activity(
+    db: AsyncSession, tournament_id: int
+) -> List[ParticipantActivityEntry]:
+    """Return prediction counts per participant for a tournament (all four prediction types)."""
+    t_cnt = (
+        select(PredictTournament.user_id, sa.func.count().label("cnt"))
+        .where(PredictTournament.tournament_id == tournament_id)
+        .group_by(PredictTournament.user_id)
+        .subquery()
+    )
+    g_cnt = (
+        select(PredictGroup.user_id, sa.func.count().label("cnt"))
+        .join(Group, PredictGroup.group_id == Group.id)
+        .where(Group.tournament_id == tournament_id)
+        .group_by(PredictGroup.user_id)
+        .subquery()
+    )
+    s_cnt = (
+        select(PredictStage.user_id, sa.func.count().label("cnt"))
+        .join(Stage, PredictStage.stage_id == Stage.id)
+        .where(Stage.tournament_id == tournament_id)
+        .group_by(PredictStage.user_id)
+        .subquery()
+    )
+    m_cnt = (
+        select(PredictMatch.user_id, sa.func.count().label("cnt"))
+        .join(Match, PredictMatch.match_id == Match.id)
+        .where(Match.tournament_id == tournament_id)
+        .group_by(PredictMatch.user_id)
+        .subquery()
+    )
+
+    q = (
+        select(
+            User.id,
+            User.user_name,
+            User.first_name,
+            sa.func.coalesce(t_cnt.c.cnt, 0).label("tournament_predictions"),
+            sa.func.coalesce(g_cnt.c.cnt, 0).label("group_predictions"),
+            sa.func.coalesce(s_cnt.c.cnt, 0).label("stage_predictions"),
+            sa.func.coalesce(m_cnt.c.cnt, 0).label("match_predictions"),
+        )
+        .join(
+            TournamentParticipantLink,
+            (TournamentParticipantLink.user_id == User.id)
+            & (TournamentParticipantLink.tournament_id == tournament_id),
+        )
+        .outerjoin(t_cnt, t_cnt.c.user_id == User.id)
+        .outerjoin(g_cnt, g_cnt.c.user_id == User.id)
+        .outerjoin(s_cnt, s_cnt.c.user_id == User.id)
+        .outerjoin(m_cnt, m_cnt.c.user_id == User.id)
+        .order_by(nullslast(User.user_name.asc()), User.first_name.asc())
+    )
+
+    result = await db.execute(q)
+    return [
+        ParticipantActivityEntry(
+            user_id=row.id,
+            user_name=row.user_name or row.first_name,
+            tournament_predictions=row.tournament_predictions,
+            group_predictions=row.group_predictions,
+            stage_predictions=row.stage_predictions,
+            match_predictions=row.match_predictions,
+        )
+        for row in result.all()
+    ]
