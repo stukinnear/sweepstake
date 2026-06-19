@@ -17,7 +17,7 @@ GROUP_PAYLOAD = {"name": "Group A", "winner_team_id": None, "winner_points": 8}
 STAGE_PAYLOAD = {"name": "Quarter-finals", "winner_team_id": None, "winner_points": None}
 
 MATCH_PAYLOAD = {
-    "start_datetime": "2026-06-10T15:00:00",
+    "start_datetime": "2030-06-10T15:00:00",
     "home_goals": None,
     "away_goals": None,
     "football_data_org_id": None,
@@ -898,7 +898,7 @@ async def test_scoring_tournament_multiple_users(client_user_1: AsyncClient, cli
 
 # Future match — predictions accepted; admin can PATCH goals any time
 SCORING_MATCH_PAYLOAD = {
-    "start_datetime": "2026-06-10T15:00:00",
+    "start_datetime": "2030-06-10T15:00:00",
     "home_goals": None,
     "away_goals": None,
     "football_data_org_id": None,

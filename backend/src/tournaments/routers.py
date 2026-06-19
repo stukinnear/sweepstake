@@ -262,31 +262,34 @@ async def join_tournament_endpoint(
     Returns the joined tournament.  A welcome email is dispatched in the background.
     """
     user_id = token_payload["uid"]
-    tournament = await crud.join_tournament(db, tournament_join_code=join_code, user_id=user_id)
-    if tournament:
-        user = await get_user_by_id(db, user_id)
-        if user:
-            admins = [
-                {"first_name": a.first_name, "last_name": a.last_name, "email": a.email}
-                for a in tournament.admins
-            ]
-            background_tasks.add_task(
-                send_competition_welcome_email,
-                to_email=user.email,
-                first_name=user.first_name,
-                tournament_name=tournament.name,
-                tournament_id=tournament.id,
-                stake=tournament.stake,
-                match_winner_points=tournament.match_winner_points,
-                match_score_points=tournament.match_score_points,
-                group_winner_points=tournament.group_winner_points,
-                stage_winner_points=tournament.stage_winner_points,
-                first_place_points=tournament.first_place_points,
-                second_place_points=tournament.second_place_points,
-                third_place_points=tournament.third_place_points,
-                admins=admins,
-                user_id=user_id,
-            )
+    tournament, already_member = await crud.join_tournament(db, tournament_join_code=join_code, user_id=user_id)
+    if not tournament:
+        raise CustomError("Tournament not found", status_code=404)
+    if already_member:
+        raise CustomError("You are already a member of this tournament", status_code=409)
+    user = await get_user_by_id(db, user_id)
+    if user:
+        admins = [
+            {"first_name": a.first_name, "last_name": a.last_name, "email": a.email}
+            for a in tournament.admins
+        ]
+        background_tasks.add_task(
+            send_competition_welcome_email,
+            to_email=user.email,
+            first_name=user.first_name,
+            tournament_name=tournament.name,
+            tournament_id=tournament.id,
+            stake=tournament.stake,
+            match_winner_points=tournament.match_winner_points,
+            match_score_points=tournament.match_score_points,
+            group_winner_points=tournament.group_winner_points,
+            stage_winner_points=tournament.stage_winner_points,
+            first_place_points=tournament.first_place_points,
+            second_place_points=tournament.second_place_points,
+            third_place_points=tournament.third_place_points,
+            admins=admins,
+            user_id=user_id,
+        )
     return tournament
 
 

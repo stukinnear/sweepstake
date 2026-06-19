@@ -88,7 +88,7 @@ async def load_test_data() -> None:
                 ),
             )
 
-            await tournament_crud.join_tournament(db, tournament_join_code=tournament.join_code, user_id=user2.id)
+            await tournament_crud.join_tournament(db, tournament_join_code=tournament.join_code, user_id=user2.id)  # returns (tournament, already_member)
             logger.info(f"Test user2 created: {user2.email}")
 
             # Get list of all teams in the tournament

@@ -221,3 +221,19 @@ async def test_join_and_leave_tournament(client_user_1: AsyncClient, client_user
     compare_item(TOURNAMENT_1_PAYLOAD, data)
     assert data["id"] == tournament_id
     assert all(u["id"] != USER_2_PAYLOAD["id"] for u in data["participant_lst"])
+
+
+@pytest.mark.asyncio
+async def test_join_tournament_already_member(client_user_1: AsyncClient, client_user_2: AsyncClient):
+    """POST /tournament/join/{join_code} returns 409 if the user is already a member."""
+    create_resp = await client_user_1.post("/tournament", json=TOURNAMENT_1_PAYLOAD)
+    assert create_resp.status_code == 201
+    join_code = create_resp.json()["join_code"]
+
+    # First join succeeds
+    join_resp = await client_user_2.post(f"/tournament/join/{join_code}")
+    assert join_resp.status_code == 200
+
+    # Second join returns 409
+    join_again_resp = await client_user_2.post(f"/tournament/join/{join_code}")
+    assert join_again_resp.status_code == 409

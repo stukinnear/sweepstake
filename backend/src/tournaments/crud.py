@@ -190,21 +190,24 @@ async def join_tournament(
     db: AsyncSession,
     tournament_join_code: int,
     user_id: int,
-):
-    """Add user as tournament participant."""
+) -> tuple:
+    """Add user as tournament participant. Returns (tournament, already_member)."""
     result = await db.execute(select(models.Tournament).where(models.Tournament.join_code == tournament_join_code))
     db_tournament = result.scalars().first()
     if not db_tournament:
-        return None
+        return None, False
     tournament_id = db_tournament.id
+    existing = await db.execute(
+        select(models.TournamentParticipantLink).where(
+            models.TournamentParticipantLink.tournament_id == tournament_id,
+            models.TournamentParticipantLink.user_id == user_id,
+        )
+    )
+    if existing.scalars().first():
+        return await get_tournament_by_id(db, tournament_id, refetch=True), True
     db.add(models.TournamentParticipantLink(tournament_id=tournament_id, user_id=user_id))
-
-    try:
-        await db.commit()
-    except IntegrityError:
-        # if user is already participant ignore error - ok
-        await db.rollback()
-    return await get_tournament_by_id(db, tournament_id, refetch=True)
+    await db.commit()
+    return await get_tournament_by_id(db, tournament_id, refetch=True), False
 
 
 async def leave_tournament(db: AsyncSession, tournament_id: int, user_id: int):
