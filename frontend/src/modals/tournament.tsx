@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { BellRing, CircleDollarSign, Crown, Loader2, RefreshCw, UserX } from 'lucide-react'
+import { BellRing, CircleDollarSign, Crown, HelpCircle, Loader2, RefreshCw, UserX } from 'lucide-react'
 import {
   useCreateTournamentMutation,
   useUpdateTournamentMutation,
@@ -10,7 +10,7 @@ import {
   useSendAdminActionMutation,
 } from '../api/tournamentApi'
 import { useGetParticipantActivityQuery } from '../api/statsApi'
-import type { TournamentAdminAction } from '../types'
+import type { PredictionsOpen, TournamentAdminAction } from '../types'
 import { useListFootballDataOrgTournamentsQuery } from '../api/footballDataOrgApi'
 import { useListTeamsQuery } from '../api/teamApi'
 import { useGetMeQuery } from '../api/authApi'
@@ -187,6 +187,8 @@ function TournamentInfoFields({
   setStake,
   footballDataOrgId,
   setFootballDataOrgId,
+  predictionsOpen,
+  setPredictionsOpen,
   autoFocusName,
   disabled,
 }: {
@@ -196,6 +198,8 @@ function TournamentInfoFields({
   setStake: (v: string) => void
   footballDataOrgId: string
   setFootballDataOrgId: (v: string) => void
+  predictionsOpen: PredictionsOpen
+  setPredictionsOpen: (v: PredictionsOpen) => void
   autoFocusName?: boolean
   disabled?: boolean
 }) {
@@ -246,6 +250,32 @@ function TournamentInfoFields({
           </select>
         )}
       </div>
+      <div>
+        <FieldLabel>
+          Predictions Open{' '}
+          <span className="relative inline-flex items-center group/tip cursor-help">
+            <HelpCircle size={13} className="text-gray-400 dark:text-gray-500" />
+            <span className="pointer-events-none absolute bottom-full left-0 mb-2 w-72 rounded-lg bg-gray-800 dark:bg-gray-900 text-white text-xs font-normal px-3 py-2 shadow-lg opacity-0 group-hover/tip:opacity-100 transition-opacity z-50 normal-case tracking-normal leading-relaxed">
+              With <strong>Automatic</strong>, tournament, group, and stage predictions are automatically closed on the day of their respective first match.
+              {' '}<strong>Open</strong> keeps those predictions open regardless of schedule.
+              {' '}<strong>Closed</strong> prevents users from submitting tournament, group, and stage predictions.
+              {' '}Match predictions are always controlled by the individual match kick-off time.
+              {' '}Admins can always update other users' predictions.
+              <span className="absolute top-full left-3 border-4 border-transparent border-t-gray-800 dark:border-t-gray-900" />
+            </span>
+          </span>
+        </FieldLabel>
+        <select
+          value={predictionsOpen}
+          onChange={(e) => setPredictionsOpen(e.target.value as PredictionsOpen)}
+          disabled={disabled}
+          className={fieldClass}
+        >
+          <option value="automatic">Automatic</option>
+          <option value="open">Open</option>
+          <option value="closed">Closed</option>
+        </select>
+      </div>
     </>
   )
 }
@@ -268,6 +298,7 @@ export function CreateTournamentModal({ onClose }: { onClose: () => void }) {
   const [matchScorePoints, setMatchScorePoints] = useState('5')
   const [groupWinnerPoints, setGroupWinnerPoints] = useState('8')
   const [stageWinnerPoints, setStageWinnerPoints] = useState('')
+  const [predictionsOpen, setPredictionsOpen] = useState<PredictionsOpen>('automatic')
   const [error, setError] = useState<string | null>(null)
 
   async function handleCreate() {
@@ -285,6 +316,7 @@ export function CreateTournamentModal({ onClose }: { onClose: () => void }) {
         match_score_points: matchScorePoints !== '' ? Number(matchScorePoints) : undefined,
         group_winner_points: groupWinnerPoints !== '' ? Number(groupWinnerPoints) : undefined,
         stage_winner_points: stageWinnerPoints !== '' ? Number(stageWinnerPoints) : undefined,
+        predictions_open: predictionsOpen,
       }).unwrap()
       onClose()
       navigate(`/tournament/${tournament.id}?guide=admin`)
@@ -303,6 +335,8 @@ export function CreateTournamentModal({ onClose }: { onClose: () => void }) {
           setStake={setStake}
           footballDataOrgId={footballDataOrgId}
           setFootballDataOrgId={setFootballDataOrgId}
+          predictionsOpen={predictionsOpen}
+          setPredictionsOpen={setPredictionsOpen}
           autoFocusName
           disabled={isLoading}
         />
@@ -410,6 +444,9 @@ export function EditTournamentModal({
   )
   const [thirdPlaceTeamId, setThirdPlaceTeamId] = useState(
     tournament.third_place_team_id?.toString() ?? '',
+  )
+  const [predictionsOpen, setPredictionsOpen] = useState<PredictionsOpen>(
+    tournament.predictions_open ?? 'automatic',
   )
   const [error, setError] = useState<string | null>(null)
   const [memberError, setMemberError] = useState<string | null>(null)
@@ -526,6 +563,7 @@ export function EditTournamentModal({
           match_score_points: matchScorePoints !== '' ? Number(matchScorePoints) : undefined,
           group_winner_points: groupWinnerPoints !== '' ? Number(groupWinnerPoints) : undefined,
           stage_winner_points: stageWinnerPoints !== '' ? Number(stageWinnerPoints) : undefined,
+          predictions_open: predictionsOpen,
         },
       }).unwrap()
       onClose()
@@ -544,6 +582,8 @@ export function EditTournamentModal({
           setStake={setStake}
           footballDataOrgId={footballDataOrgId}
           setFootballDataOrgId={setFootballDataOrgId}
+          predictionsOpen={predictionsOpen}
+          setPredictionsOpen={setPredictionsOpen}
           disabled={isLoading}
         />
         <EditPointAndTeamFields

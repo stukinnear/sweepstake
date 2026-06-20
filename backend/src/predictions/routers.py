@@ -74,9 +74,15 @@ async def upsert_predict_tournament_endpoint(
     if await crud.is_admin_of_tournament(db, data.tournament_id, token_user_id) and target_user_id != token_user_id:
         pass  # admin editing another user's prediction
     elif target_user_id == token_user_id:
-        start_dt = await crud.get_tournament_start_datetime(db, data.tournament_id)
-        if start_dt is None or start_dt.astimezone(timezone.utc) <= datetime.now(timezone.utc):
-            raise CustomError("Forbidden: predictions can only be submitted before the tournament starts", status_code=403)
+        predictions_open = await crud.get_tournament_predictions_open(db, data.tournament_id)
+        if predictions_open == "closed":
+            raise CustomError("Forbidden: predictions are closed for this tournament", status_code=403)
+        elif predictions_open == "open":
+            pass  # always allowed
+        else:  # automatic
+            start_dt = await crud.get_tournament_start_datetime(db, data.tournament_id)
+            if start_dt is None or start_dt.astimezone(timezone.utc) <= datetime.now(timezone.utc):
+                raise CustomError("Forbidden: predictions can only be submitted before the tournament starts", status_code=403)
     else:
         raise CustomError("Forbidden: predictions can only be submitted before the tournament starts or by admins", status_code=403)
     return await crud.upsert_predict_tournament(db, data, target_user_id)
@@ -138,9 +144,15 @@ async def upsert_predict_group_endpoint(
     if await crud.is_admin_of_tournament(db, group.tournament_id, token_user_id) and target_user_id != token_user_id:
         pass  # admin editing another user's prediction
     elif target_user_id == token_user_id:
-        start_dt = await crud.get_group_start_datetime(db, data.group_id)
-        if start_dt is None or start_dt.astimezone(timezone.utc) <= datetime.now(timezone.utc):
-            raise CustomError("Forbidden: predictions can only be submitted before the group starts", status_code=403)
+        predictions_open = await crud.get_tournament_predictions_open(db, group.tournament_id)
+        if predictions_open == "closed":
+            raise CustomError("Forbidden: predictions are closed for this tournament", status_code=403)
+        elif predictions_open == "open":
+            pass  # always allowed
+        else:  # automatic
+            start_dt = await crud.get_group_start_datetime(db, data.group_id)
+            if start_dt is None or start_dt.astimezone(timezone.utc) <= datetime.now(timezone.utc):
+                raise CustomError("Forbidden: predictions can only be submitted before the group starts", status_code=403)
     else:
         raise CustomError("Forbidden: predictions can only be submitted before the group starts or by admins", status_code=403)
     return await crud.upsert_predict_group(db, data, target_user_id, background_tasks)
@@ -228,9 +240,15 @@ async def upsert_predict_stage_endpoint(
     if await crud.is_admin_of_tournament(db, stage.tournament_id, token_user_id) and target_user_id != token_user_id:
         pass  # admin editing another user's prediction
     elif target_user_id == token_user_id:
-        start_dt = await crud.get_stage_start_datetime(db, data.stage_id)
-        if start_dt is None or start_dt.astimezone(timezone.utc) <= datetime.now(timezone.utc):
-            raise CustomError("Forbidden: predictions can only be submitted before the stage starts", status_code=403)
+        predictions_open = await crud.get_tournament_predictions_open(db, stage.tournament_id)
+        if predictions_open == "closed":
+            raise CustomError("Forbidden: predictions are closed for this tournament", status_code=403)
+        elif predictions_open == "open":
+            pass  # always allowed
+        else:  # automatic
+            start_dt = await crud.get_stage_start_datetime(db, data.stage_id)
+            if start_dt is None or start_dt.astimezone(timezone.utc) <= datetime.now(timezone.utc):
+                raise CustomError("Forbidden: predictions can only be submitted before the stage starts", status_code=403)
     else:
         raise CustomError("Forbidden: predictions can only be submitted before the stage starts or by admins", status_code=403)
     return await crud.upsert_predict_stage(db, data, target_user_id, background_tasks)

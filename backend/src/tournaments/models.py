@@ -46,6 +46,12 @@ class TournamentParticipantLink(SQLModel, table=True):
 # Base / DB model
 # ---------------------------------------------------------------------------
 
+class PredictionsOpen(str, Enum):
+    automatic = "automatic"
+    open = "open"
+    closed = "closed"
+
+
 class TournamentBase(SQLModel):
     """Shared tournament fields used across create, read, and update schemas."""
     name: str = Field(..., min_length=1, max_length=255)
@@ -61,6 +67,7 @@ class TournamentBase(SQLModel):
     match_score_points: Optional[int] = Field(default=5, ge=0)
     group_winner_points: Optional[int] = Field(default=8, ge=0)
     stage_winner_points: Optional[int] = Field(default=0, ge=0)
+    predictions_open: PredictionsOpen = Field(default=PredictionsOpen.automatic)
 
 
 class Tournament(TournamentBase, table=True):
@@ -69,6 +76,10 @@ class Tournament(TournamentBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     join_code: Optional[str] = Field(default=None, unique=True, max_length=16)
     stake: Optional[str] = Field(default=None, sa_column=sa.Column(sa.Text, nullable=True))
+    predictions_open: PredictionsOpen = Field(
+        default=PredictionsOpen.automatic,
+        sa_column=sa.Column(sa.String(16), nullable=False, default="automatic", server_default="automatic"),
+    )
     football_data_org_id: Optional[int] = Field(default=None, unique=False)
     first_place_team_id: Optional[int] = Field(default=None, sa_column=sa.Column(sa.Integer, sa.ForeignKey("team.id", use_alter=True, name="fk_tournament_first_place_team_id"), nullable=True))
     second_place_team_id: Optional[int] = Field(default=None, sa_column=sa.Column(sa.Integer, sa.ForeignKey("team.id", use_alter=True, name="fk_tournament_second_place_team_id"), nullable=True))
