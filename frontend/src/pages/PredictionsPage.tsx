@@ -534,10 +534,17 @@ export function PredictionsPage() {
     ? stages.filter((s) => s.start_date != null && s.start_date <= today)
     : stages)
 
-  // For admin editing another user, override disabled so all inputs are editable
+  // For admin editing another user, override disabled so all inputs are editable.
+  // For own predictions, respect predictions_open: 'open' forces enabled, 'closed' forces disabled,
+  // 'automatic' falls back to the date-based check.
+  const predictionsOpen = tournament.predictions_open ?? 'automatic'
   const tournamentDisabled = adminEditingOther
     ? false
-    : (tournament.start_date != null && tournament.start_date <= today)
+    : predictionsOpen === 'open'
+      ? false
+      : predictionsOpen === 'closed'
+        ? true
+        : (tournament.start_date != null && tournament.start_date <= today)
 
   return (
     <PageShell>
@@ -630,7 +637,13 @@ export function PredictionsPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {visibleStages.map((stage) => {
                 const stageStarted = stage.start_date != null ? stage.start_date <= today : false
-                const stageDisabled = adminEditingOther ? false : stageStarted
+                const stageDisabled = adminEditingOther
+                  ? false
+                  : predictionsOpen === 'open'
+                    ? false
+                    : predictionsOpen === 'closed'
+                      ? true
+                      : stageStarted
                 return (
                   <TeamSelect
                     key={stage.id}
@@ -667,7 +680,13 @@ export function PredictionsPage() {
               {visibleGroups.map((group) => {
                 const groupTeams = teams.filter((t) => t.group_id === group.id)
                 const groupStarted = group.start_date != null ? group.start_date <= today : false
-                const groupDisabled = adminEditingOther ? false : groupStarted
+                const groupDisabled = adminEditingOther
+                  ? false
+                  : predictionsOpen === 'open'
+                    ? false
+                    : predictionsOpen === 'closed'
+                      ? true
+                      : groupStarted
                 return (
                   <TeamSelect
                     key={group.id}

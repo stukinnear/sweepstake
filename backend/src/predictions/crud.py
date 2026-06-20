@@ -11,7 +11,7 @@ from src.predictions import models
 from src.matches.models import Match
 from src.groups_stages.models import Group, Stage
 from src.teams.models import Team
-from src.tournaments.models import TournamentAdminLink
+from src.tournaments.models import TournamentAdminLink, Tournament
 from src.predictions import scoring as predictions_scoring
 
 
@@ -58,6 +58,15 @@ async def get_stage_start_datetime(db: AsyncSession, stage_id: int) -> Optional[
         select(sa.func.min(Match.start_datetime)).where(Match.stage_id == stage_id)
     )
     return result.scalar_one_or_none()
+
+
+async def get_tournament_predictions_open(db: AsyncSession, tournament_id: int) -> str:
+    """Return the predictions_open setting ('automatic', 'open', or 'closed') for a tournament."""
+    result = await db.execute(
+        select(Tournament.predictions_open).where(Tournament.id == tournament_id)
+    )
+    value = result.scalar_one_or_none()
+    return value if value is not None else "automatic"
 
 
 

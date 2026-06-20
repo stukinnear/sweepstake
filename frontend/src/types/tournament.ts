@@ -1,5 +1,7 @@
 import type { TeamRead } from './team'
 
+export type PredictionsOpen = 'automatic' | 'open' | 'closed'
+
 export interface FootballDataOrgTournament {
   id: number
   name: string
@@ -32,6 +34,7 @@ export interface Tournament {
   match_score_points: number | null
   group_winner_points: number | null
   stage_winner_points: number | null
+  predictions_open: PredictionsOpen
   admin_lst: TournamentUser[]
   participant_lst: TournamentUser[]
   start_date: string | null
@@ -55,6 +58,7 @@ export interface TournamentCreate {
   match_score_points?: number
   group_winner_points?: number
   stage_winner_points?: number
+  predictions_open?: PredictionsOpen
 }
 
 export interface TournamentUpdate extends Partial<TournamentCreate> {}
