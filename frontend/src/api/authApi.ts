@@ -31,7 +31,7 @@ export const authApi = baseApi.injectEndpoints({
       query: (body) => ({ url: '/auth/login', method: 'POST', body }),
       invalidatesTags: ['Me'],
       onQueryStarted: async (_, { queryFulfilled }) => {
-        try { await queryFulfilled; setLoginExpiry() } catch {}
+        try { await queryFulfilled; setLoginExpiry() } catch { /* ignore */ }
       },
     }),
 
@@ -39,7 +39,7 @@ export const authApi = baseApi.injectEndpoints({
       query: (body) => ({ url: '/auth/register', method: 'POST', body }),
       invalidatesTags: ['Me'],
       onQueryStarted: async (_, { queryFulfilled }) => {
-        try { await queryFulfilled; setLoginExpiry() } catch {}
+        try { await queryFulfilled; setLoginExpiry() } catch { /* ignore */ }
       },
     }),
 
@@ -47,14 +47,14 @@ export const authApi = baseApi.injectEndpoints({
       query: () => ({ url: '/auth/logout', method: 'POST' }),
       invalidatesTags: ['Me'],
       onQueryStarted: async (_, { queryFulfilled }) => {
-        try { await queryFulfilled; localStorage.removeItem('loginExpiry') } catch {}
+        try { await queryFulfilled; localStorage.removeItem('loginExpiry') } catch { /* ignore */ }
       },
     }),
 
     refresh: build.mutation<void, void>({
       query: () => ({ url: '/auth/refresh', method: 'POST' }),
       onQueryStarted: async (_, { queryFulfilled }) => {
-        try { await queryFulfilled; setLoginExpiry() } catch {}
+        try { await queryFulfilled; setLoginExpiry() } catch { /* ignore */ }
       },
     }),
 
@@ -62,7 +62,7 @@ export const authApi = baseApi.injectEndpoints({
       query: () => ({ url: '/auth/me', method: 'DELETE' }),
       invalidatesTags: ['Me'],
       onQueryStarted: async (_, { queryFulfilled }) => {
-        try { await queryFulfilled; localStorage.removeItem('loginExpiry') } catch {}
+        try { await queryFulfilled; localStorage.removeItem('loginExpiry') } catch { /* ignore */ }
       },
     }),
 

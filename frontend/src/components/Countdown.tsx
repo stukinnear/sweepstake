@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 
 export function Countdown({ targetMs, onZero }: { targetMs: number; onZero?: () => void }) {
   const [, tick] = useState(0)
   const onZeroRef = useRef(onZero)
-  onZeroRef.current = onZero
+  useLayoutEffect(() => { onZeroRef.current = onZero })
   useEffect(() => {
     const id = setInterval(() => {
       if (Date.now() >= targetMs) {
@@ -31,7 +31,7 @@ export function Countdown({ targetMs, onZero }: { targetMs: number; onZero?: () 
 export function ElapsedTime({ startMs, maxMs, onMax }: { startMs: number; maxMs: number; onMax?: () => void }) {
   const [, tick] = useState(0)
   const onMaxRef = useRef(onMax)
-  onMaxRef.current = onMax
+  useLayoutEffect(() => { onMaxRef.current = onMax })
   useEffect(() => {
     const id = setInterval(() => {
       if (Date.now() >= maxMs) {

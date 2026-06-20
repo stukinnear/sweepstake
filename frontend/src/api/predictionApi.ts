@@ -25,7 +25,7 @@ export const tournamentPredictionApi = baseApi.injectEndpoints({
             }))
           patch({ tournamentId: tournament_id })
           patch({ tournamentId: tournament_id, userId: p.user_id })
-        } catch {}
+        } catch { /* ignore */ }
       },
     }),
     getTournamentPredictions: build.query<TournamentPrediction[], { tournamentId: number; userId?: number }>({
@@ -55,7 +55,7 @@ export { useUpsertTournamentPredictionMutation, useDeleteTournamentPredictionMut
 export const groupPredictionApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
     upsertGroupPrediction: build.mutation<GroupPrediction, GroupPredictionUpsert & { userId?: number; tournamentId?: number }>({
-      query: ({ userId, tournamentId, ...body }) => ({ url: '/predict/group', method: 'POST', body, params: userId !== undefined ? { user_id: userId } : undefined }),
+      query: ({ userId, tournamentId: _tournamentId, ...body }) => ({ url: '/predict/group', method: 'POST', body, params: userId !== undefined ? { user_id: userId } : undefined }),
       async onQueryStarted({ tournamentId }, { dispatch, queryFulfilled }) {
         if (tournamentId === undefined) return
         try {
@@ -67,7 +67,7 @@ export const groupPredictionApi = baseApi.injectEndpoints({
             }))
           patch({ tournamentId })
           patch({ tournamentId, userId: p.user_id })
-        } catch {}
+        } catch { /* ignore */ }
       },
     }),
     getGroupPredictions: build.query<GroupPrediction[], { groupId: number; userId?: number }>({
@@ -98,7 +98,7 @@ export { useUpsertGroupPredictionMutation }
 export const stagePredictionApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
     upsertStagePrediction: build.mutation<StagePrediction, StagePredictionUpsert & { userId?: number; tournamentId?: number }>({
-      query: ({ userId, tournamentId, ...body }) => ({ url: '/predict/stage', method: 'POST', body, params: userId !== undefined ? { user_id: userId } : undefined }),
+      query: ({ userId, tournamentId: _tournamentId, ...body }) => ({ url: '/predict/stage', method: 'POST', body, params: userId !== undefined ? { user_id: userId } : undefined }),
       async onQueryStarted({ tournamentId }, { dispatch, queryFulfilled }) {
         if (tournamentId === undefined) return
         try {
@@ -110,7 +110,7 @@ export const stagePredictionApi = baseApi.injectEndpoints({
             }))
           patch({ tournamentId })
           patch({ tournamentId, userId: p.user_id })
-        } catch {}
+        } catch { /* ignore */ }
       },
     }),
     getStagePredictions: build.query<StagePrediction[], { stageId: number; userId?: number }>({
@@ -141,7 +141,7 @@ export { useUpsertStagePredictionMutation }
 export const matchPredictionApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
     upsertMatchPrediction: build.mutation<MatchPrediction, MatchPredictionUpsert & { userId?: number; tournamentId?: number }>({
-      query: ({ userId, tournamentId, ...body }) => ({ url: '/predict/match', method: 'POST', body, params: userId !== undefined ? { user_id: userId } : undefined }),
+      query: ({ userId, tournamentId: _tournamentId, ...body }) => ({ url: '/predict/match', method: 'POST', body, params: userId !== undefined ? { user_id: userId } : undefined }),
       async onQueryStarted({ tournamentId }, { dispatch, queryFulfilled }) {
         if (tournamentId === undefined) return
         try {
@@ -153,7 +153,7 @@ export const matchPredictionApi = baseApi.injectEndpoints({
             }))
           patch({ tournamentId })
           patch({ tournamentId, userId: p.user_id })
-        } catch {}
+        } catch { /* ignore */ }
       },
     }),
     getMatchPredictions: build.query<MatchPrediction[], { matchId: number; userId?: number }>({

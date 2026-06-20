@@ -16,7 +16,7 @@ export interface GroupCreate {
   winner_team_id?: number
 }
 
-export interface GroupUpdate extends Partial<Omit<GroupCreate, 'tournament_id'>> {}
+export type GroupUpdate = Partial<Omit<GroupCreate, 'tournament_id'>>
 
 export interface Stage {
   id: number

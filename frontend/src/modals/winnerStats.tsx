@@ -188,6 +188,44 @@ export function StageStatsModal({
 }
 
 // ---------------------------------------------------------------------------
+// PlaceRow (used by TournamentStatsModal)
+// ---------------------------------------------------------------------------
+function PlaceRow({
+  emoji,
+  team,
+  emojiSize,
+  textSize,
+  imgSize,
+}: {
+  emoji: string
+  team: { name: string; image_url: string | null } | null | undefined
+  emojiSize: string
+  textSize: string
+  imgSize: string
+}) {
+  return (
+    <div className="flex items-center gap-2.5">
+      <span className={emojiSize}>{emoji}</span>
+      {team ? (
+        <span className={`inline-flex items-center gap-2 font-bold text-gray-900 dark:text-gray-100 ${textSize}`}>
+          {team.image_url && (
+            <img
+              src={team.image_url}
+              alt={team.name}
+              decoding="async"
+              className={`${imgSize} rounded-full object-cover border border-gray-200 dark:border-gray-700`}
+            />
+          )}
+          {team.name}
+        </span>
+      ) : (
+        <span className={`text-gray-400 dark:text-gray-500 italic ${textSize}`}>not decided yet</span>
+      )}
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // TournamentStatsModal
 // ---------------------------------------------------------------------------
 export function TournamentStatsModal({
@@ -200,41 +238,6 @@ export function TournamentStatsModal({
   onClose: () => void
 }) {
   const { data: stats, isLoading, error } = useGetTournamentStatsQuery(tournamentId)
-
-  function PlaceRow({
-    emoji,
-    team,
-    emojiSize,
-    textSize,
-    imgSize,
-  }: {
-    emoji: string
-    team: { name: string; image_url: string | null } | null | undefined
-    emojiSize: string
-    textSize: string
-    imgSize: string
-  }) {
-    return (
-      <div className="flex items-center gap-2.5">
-        <span className={emojiSize}>{emoji}</span>
-        {team ? (
-          <span className={`inline-flex items-center gap-2 font-bold text-gray-900 dark:text-gray-100 ${textSize}`}>
-            {team.image_url && (
-              <img
-                src={team.image_url}
-                alt={team.name}
-                decoding="async"
-                className={`${imgSize} rounded-full object-cover border border-gray-200 dark:border-gray-700`}
-              />
-            )}
-            {team.name}
-          </span>
-        ) : (
-          <span className={`text-gray-400 dark:text-gray-500 italic ${textSize}`}>not decided yet</span>
-        )}
-      </div>
-    )
-  }
 
   return (
     <ModalShell title={`${tournamentName} — Winner Predictions`} onClose={onClose} maxWidth="max-w-lg">

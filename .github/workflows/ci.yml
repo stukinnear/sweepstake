@@ -1,0 +1,157 @@
+name: CI
+
+on:
+  push:
+    branches: [dev, main, master]
+    paths-ignore: ['.github/**', 'docs/**', 'README.md']
+  pull_request:
+    branches: [dev, main, master]
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+jobs:
+  backend-tests:
+    name: Backend tests (pytest)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read Python version from Dockerfile
+        id: versions
+        run: echo "python=$(grep -m1 '^FROM python:' ../Dockerfile | sed 's/FROM python:\([0-9.]*\).*/\1/')" >> $GITHUB_OUTPUT
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ steps.versions.outputs.python }}
+          cache: pip
+          cache-dependency-path: backend/src/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r src/requirements.txt -r src/requirements-test.txt
+
+      - name: Run tests
+        run: python -m pytest tests/ -q --junit-xml=test-results.xml
+
+      - name: Publish test results
+        if: always()
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          files: backend/test-results.xml
+
+  frontend-lint-build:
+    name: Frontend lint & build (npm)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read Node version from Dockerfile
+        id: versions
+        run: echo "node=$(grep -m1 '^FROM node:' ../Dockerfile | sed 's/FROM node:\([0-9]*\).*/\1/')" >> $GITHUB_OUTPUT
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ steps.versions.outputs.node }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        id: typecheck
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          npx tsc --noEmit 2>&1 | tee /tmp/typecheck.txt
+
+      - name: Lint
+        id: lint
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run lint 2>&1 | tee /tmp/lint.txt
+
+      - name: Build
+        id: build
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run build 2>&1 | tee /tmp/build.txt
+
+      - name: Post PR comment
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const icon = s => s === 'success' ? '✅' : '❌';
+            const typecheck = '${{ steps.typecheck.outcome }}';
+            const lint = '${{ steps.lint.outcome }}';
+            const build = '${{ steps.build.outcome }}';
+            let body = `### Frontend Results\n| Step | Status |\n|---|---|\n| Type check | ${icon(typecheck)} ${typecheck} |\n| Lint | ${icon(lint)} ${lint} |\n| Build | ${icon(build)} ${build} |`;
+            const steps = [
+              { name: 'Type check', outcome: typecheck, file: '/tmp/typecheck.txt' },
+              { name: 'Lint',       outcome: lint,      file: '/tmp/lint.txt' },
+              { name: 'Build',      outcome: build,     file: '/tmp/build.txt' },
+            ];
+            for (const s of steps) {
+              if (s.outcome !== 'success') {
+                const out = fs.existsSync(s.file) ? fs.readFileSync(s.file, 'utf8').trim() : '';
+                if (out) body += `\n\n<details><summary>${s.name} output</summary>\n\n\`\`\`\n${out.slice(0, 4000)}\n\`\`\`\n</details>`;
+              }
+            }
+            await github.rest.issues.createComment({ ...context.repo, issue_number: context.issue.number, body });
+
+      - name: Fail if any check failed
+        if: steps.typecheck.outcome == 'failure' || steps.lint.outcome == 'failure' || steps.build.outcome == 'failure'
+        run: exit 1
+
+  docker-build:
+    name: Docker build check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image (no push)
+        id: build
+        continue-on-error: true
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Post PR comment
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const outcome = '${{ steps.build.outcome }}';
+            const icon = outcome === 'success' ? '✅' : '❌';
+            await github.rest.issues.createComment({
+              ...context.repo,
+              issue_number: context.issue.number,
+              body: `### Docker Build\n${icon} Docker image build ${outcome}.`
+            });
+
+      - name: Fail if build failed
+        if: steps.build.outcome == 'failure'
+        run: exit 1

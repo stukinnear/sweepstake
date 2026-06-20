@@ -58,7 +58,7 @@ const PARTICIPANT_PAGES: GuidePage[] = [
     ),
   },
   {
-    title: "View Others\' Predictions:",
+    title: "View Others' Predictions:",
     emoji: '🔍',
     body: (
       <div className="space-y-3 text-sm text-gray-700 dark:text-gray-300">

@@ -20,4 +20,4 @@ export interface TeamCreate {
   group_id?: number
 }
 
-export interface TeamUpdate extends Partial<Omit<TeamCreate, 'tournament_id'>> {}
+export type TeamUpdate = Partial<Omit<TeamCreate, 'tournament_id'>>

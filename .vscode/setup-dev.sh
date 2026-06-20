@@ -7,8 +7,7 @@ rm -rf "$WORKSPACE/backend/.venv" "$WORKSPACE/backend/.venv.nosync"
 python3 -m venv "$WORKSPACE/backend/.venv.nosync"
 ln -s "$WORKSPACE/backend/.venv.nosync" "$WORKSPACE/backend/.venv"
 "$WORKSPACE/backend/.venv.nosync/bin/pip" install --upgrade pip -q
-"$WORKSPACE/backend/.venv.nosync/bin/pip" install -r "$WORKSPACE/backend/src/requirements.txt"
-"$WORKSPACE/backend/.venv.nosync/bin/pip" install pytest pytest-asyncio httpx
+"$WORKSPACE/backend/.venv.nosync/bin/pip" install -r "$WORKSPACE/backend/src/requirements.txt" -r "$WORKSPACE/backend/src/requirements-test.txt"
 echo ">>> Backend venv done"
 
 # ── Frontend node_modules ─────────────────────────────────────────────────────

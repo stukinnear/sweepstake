@@ -61,7 +61,7 @@ export interface TournamentCreate {
   predictions_open?: PredictionsOpen
 }
 
-export interface TournamentUpdate extends Partial<TournamentCreate> {}
+export type TournamentUpdate = Partial<TournamentCreate>
 
 export interface TournamentMemberUpdate {
   user_id: number

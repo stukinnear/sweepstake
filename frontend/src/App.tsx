@@ -83,6 +83,7 @@ function ProtectedRoute() {
 
   if (!isAuthenticated) {
     // Do not add ?redirect= when logging out (was previously authenticated).
+    // eslint-disable-next-line react-hooks/refs
     if (wasAuthenticated.current) {
       return <Navigate to="/login" replace />
     }

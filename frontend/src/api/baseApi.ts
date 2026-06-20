@@ -72,6 +72,7 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQue
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function addPolling<T extends (arg: any, options?: any) => any>(hook: T, pollingInterval: number): T {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return ((arg: any, options?: any) =>
     hook(arg, { pollingInterval, skipPollingIfUnfocused: true, ...options })) as T
 }
