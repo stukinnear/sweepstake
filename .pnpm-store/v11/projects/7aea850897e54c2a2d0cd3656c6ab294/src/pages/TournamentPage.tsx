@@ -24,6 +24,28 @@ function teamImageUrl(value: string | null | undefined): string | null {
   return value
 }
 
+function TeamBadge({ name, imageUrl }: { name: string | null | undefined; imageUrl: string | null | undefined }) {
+  const [failed, setFailed] = useState(false)
+  const src = failed ? null : teamImageUrl(imageUrl)
+  if (src) {
+    return (
+      <img
+        src={src}
+        alt={name ?? 'Team badge'}
+        decoding="async"
+        referrerPolicy="no-referrer"
+        onError={() => setFailed(true)}
+        className="h-7 w-7 flex-shrink-0 rounded-full object-contain bg-white border border-gray-200 dark:border-gray-700"
+      />
+    )
+  }
+  return (
+    <span className="h-7 w-7 flex-shrink-0 rounded-full bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 inline-flex items-center justify-center text-[10px] font-semibold text-gray-500 dark:text-gray-300">
+      {(name ?? '?').slice(0, 3)}
+    </span>
+  )
+}
+
 export function TournamentPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -388,18 +410,7 @@ export function TournamentPage() {
                         <span className="text-sm text-right text-gray-900 dark:text-gray-100 truncate">
                           {match.home_team?.name ?? '—'}
                         </span>
-                        {teamImageUrl(match.home_team?.image_url) ? (
-                          <img
-                            src={teamImageUrl(match.home_team?.image_url)!}
-                            alt={match.home_team?.name ?? 'Home team'}
-                            decoding="async"
-                            referrerPolicy="no-referrer"
-                            onError={(e) => { e.currentTarget.style.visibility = 'hidden' }}
-                            className="h-7 w-7 flex-shrink-0 rounded-full object-cover border border-gray-200 dark:border-gray-700"
-                          />
-                        ) : (
-                          <span className="h-7 w-7 flex-shrink-0 rounded-full bg-gray-200 dark:bg-gray-700 inline-block" />
-                        )}
+                        <TeamBadge name={match.home_team?.name} imageUrl={match.home_team?.image_url} />
                       </div>
 
                       {/* Score — row 2 center on mobile, col 3 on desktop */}
@@ -417,18 +428,7 @@ export function TournamentPage() {
                             : 'hover:bg-gray-100 dark:hover:bg-gray-700',
                         ].join(' ')}
                       >
-                        {teamImageUrl(match.away_team?.image_url) ? (
-                          <img
-                            src={teamImageUrl(match.away_team?.image_url)!}
-                            alt={match.away_team?.name ?? 'Away team'}
-                            decoding="async"
-                            referrerPolicy="no-referrer"
-                            onError={(e) => { e.currentTarget.style.visibility = 'hidden' }}
-                            className="h-7 w-7 flex-shrink-0 rounded-full object-cover border border-gray-200 dark:border-gray-700"
-                          />
-                        ) : (
-                          <span className="h-7 w-7 flex-shrink-0 rounded-full bg-gray-200 dark:bg-gray-700 inline-block" />
-                        )}
+                        <TeamBadge name={match.away_team?.name} imageUrl={match.away_team?.image_url} />
                         <span className="text-sm text-left text-gray-900 dark:text-gray-100 truncate">
                           {match.away_team?.name ?? '—'}
                         </span>

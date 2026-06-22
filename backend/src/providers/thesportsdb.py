@@ -33,8 +33,17 @@ class TheSportsDBProvider(FootballProvider):
         events = data.get("events") or []
         team_ids = {event.get("idHomeTeam") for event in events if event.get("idHomeTeam")}
         team_ids.update(event.get("idAwayTeam") for event in events if event.get("idAwayTeam"))
-        teams = await self._fetch_teams(team_ids)
+        teams = await self._fetch_league_teams(competition_id)
+        teams.update(await self._fetch_teams(team_ids - set(teams.keys())))
         return data, [self._normalize_match(event, teams) for event in events if event.get("idEvent")]
+
+    async def _fetch_league_teams(self, competition_id: str) -> dict[str, dict]:
+        data = await self._get_json("lookup_all_teams.php", {"id": competition_id})
+        return {
+            str(team["idTeam"]): team
+            for team in data.get("teams") or []
+            if team.get("idTeam")
+        }
 
     async def _fetch_teams(self, team_ids: set[str]) -> dict[str, dict]:
         teams: dict[str, dict] = {}
