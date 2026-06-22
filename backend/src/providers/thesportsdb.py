@@ -35,6 +35,7 @@ class TheSportsDBProvider(FootballProvider):
         team_ids.update(event.get("idAwayTeam") for event in events if event.get("idAwayTeam"))
         teams = await self._fetch_league_teams(competition_id)
         teams.update(await self._fetch_teams(team_ids - set(teams.keys())))
+        await self._fetch_missing_team_images(events, teams)
         return data, [self._normalize_match(event, teams) for event in events if event.get("idEvent")]
 
     async def _fetch_league_teams(self, competition_id: str) -> dict[str, dict]:
@@ -53,6 +54,23 @@ class TheSportsDBProvider(FootballProvider):
             if team:
                 teams[team_id] = team
         return teams
+
+    async def _fetch_missing_team_images(self, events: list[dict], teams: dict[str, dict]) -> None:
+        for event in events:
+            for side in ("Home", "Away"):
+                team_id = event.get(f"id{side}Team")
+                team_name = event.get(f"str{side}Team")
+                if not team_id or not team_name:
+                    continue
+                team = teams.get(team_id) or {}
+                if self._team_image(team):
+                    continue
+                search_data = await self._get_json("searchteams.php", {"t": team_name})
+                matches = search_data.get("teams") or []
+                found = next((item for item in matches if str(item.get("idTeam")) == str(team_id)), None)
+                found = found or (matches[0] if matches else None)
+                if found:
+                    teams[team_id] = {**team, **found}
 
     async def _get_json(self, endpoint: str, params: dict[str, str]) -> dict:
         url = f"https://www.thesportsdb.com/api/v1/json/{settings.thesportsdb_api_key}/{endpoint}"
@@ -83,12 +101,18 @@ class TheSportsDBProvider(FootballProvider):
             name=(team or {}).get("strTeam") or event.get(f"str{side}Team") or "TBD",
             iso_code=(team or {}).get("strTeamShort"),
             image_url=self._image_url(
-                (team or {}).get("strBadge")
-                or (team or {}).get("strTeamBadge")
-                or (team or {}).get("strLogo")
+                self._team_image(team or {})
                 or event.get(f"str{side}TeamBadge")
                 or event.get(f"str{side}TeamLogo")
             ),
+        )
+
+    def _team_image(self, team: dict) -> str | None:
+        return (
+            team.get("strBadge")
+            or team.get("strTeamBadge")
+            or team.get("strLogo")
+            or team.get("strTeamLogo")
         )
 
     def _image_url(self, value: str | None) -> str | None:

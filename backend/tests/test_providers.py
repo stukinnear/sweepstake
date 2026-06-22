@@ -102,8 +102,10 @@ async def test_import_thesportsdb_provider_normalizes_scottish_premiership(clien
         if url.endswith("lookup_all_teams.php") and params == {"id": "4330"}:
             return FakeResponse({"teams": [
                 {"idTeam": "201", "strTeam": "Heart of Midlothian", "strTeamShort": "HEA", "strBadge": "/images/media/team/badge/hearts.png"},
-                {"idTeam": "202", "strTeam": "Hibernian", "strTeamShort": "HIB", "strBadge": "https://example.com/hibs.png"},
+                {"idTeam": "202", "strTeam": "Hibernian", "strTeamShort": "HIB", "strBadge": None},
             ]})
+        if url.endswith("searchteams.php") and params == {"t": "Hibs"}:
+            return FakeResponse({"teams": [{"idTeam": "202", "strTeam": "Hibernian", "strTeamShort": "HIB", "strBadge": "https://example.com/hibs.png"}]})
         if url.endswith("lookupteam.php") and params == {"id": "201"}:
             return FakeResponse({"teams": [{"idTeam": "201", "strTeam": "Heart of Midlothian", "strTeamShort": "HEA", "strBadge": "/images/media/team/badge/hearts.png"}]})
         if url.endswith("lookupteam.php") and params == {"id": "202"}:

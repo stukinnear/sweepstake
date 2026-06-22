@@ -88,17 +88,25 @@ class FootballProvider(ABC):
         data_hash = hashlib.md5(str(raw).encode()).hexdigest()
         hash_file = _DATA_DIR / f"provider_hash_{self.provider_id}_{competition_id}.txt"
         legacy_hash_file = _DATA_DIR / f"football_data_hash_{competition_id}.txt"
-        if hash_file.is_file() and hash_file.read_text().strip() == data_hash:
-            logger.info("No changes detected for %s competition %s; skipping import.", self.provider_id, competition_id)
-            return
-
         tournament_ids = await self._tournament_ids(db, competition_id)
+        if hash_file.is_file() and hash_file.read_text().strip() == data_hash:
+            if await self._has_missing_team_images(db, tournament_ids):
+                logger.info("No match changes for %s competition %s, but team images are missing; refreshing metadata.", self.provider_id, competition_id)
+            else:
+                logger.info("No changes detected for %s competition %s; skipping import.", self.provider_id, competition_id)
+                return
+
         cutoff = datetime.now(timezone.utc) - timedelta(hours=24)
         relevant_matches = [
             match for match in matches
             if match.status in {"TIMED", "SCHEDULED", "FINISHED", "LIVE", "IN_PLAY"}
             and (match.status != "FINISHED" or match.start_datetime >= cutoff)
         ]
+
+        await self._refresh_team_metadata(db, tournament_ids, relevant_matches)
+        if hash_file.is_file() and hash_file.read_text().strip() == data_hash:
+            await db.commit()
+            return
 
         match_ids_to_rescore: list[int] = []
         for provider_match in relevant_matches:
@@ -122,6 +130,30 @@ class FootballProvider(ABC):
         hash_file.write_text(data_hash)
         if self.provider_id == "football-data-org":
             legacy_hash_file.write_text(data_hash)
+
+    async def _has_missing_team_images(self, db: AsyncSession, tournament_ids: list[int]) -> bool:
+        if not tournament_ids:
+            return False
+        result = await db.execute(
+            select(team_models.Team.id)
+            .where(team_models.Team.tournament_id.in_(tournament_ids))
+            .where(team_models.Team.external_provider == self.provider_id)
+            .where((team_models.Team.image_url.is_(None)) | (team_models.Team.image_url == ""))
+            .limit(1)
+        )
+        return result.scalar_one_or_none() is not None
+
+    async def _refresh_team_metadata(
+        self,
+        db: AsyncSession,
+        tournament_ids: list[int],
+        matches: list[ProviderMatch],
+    ) -> None:
+        for tournament_id in tournament_ids:
+            team_map: dict[str, int] = {}
+            for provider_match in matches:
+                await self._get_or_create_team(db, tournament_id, provider_match.home_team, None, team_map)
+                await self._get_or_create_team(db, tournament_id, provider_match.away_team, None, team_map)
 
     async def _get_or_create_group(
         self,
