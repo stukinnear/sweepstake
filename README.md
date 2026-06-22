@@ -10,7 +10,7 @@ Create a tournament or join one via an invite link. Make predictions on match sc
 - Create a tournament or join one via a shareable invite link
 - Predict match scores, group winners, knockout stage winners, and the overall tournament winner
 - Configurable point system per tournament (exact score, correct winner, group winner, stage winner, tournament podium)
-- Import tournament fixtures and results automatically from [football-data.org](https://www.football-data.org/)
+- Import tournament fixtures and results automatically from pluggable providers: [football-data.org](https://www.football-data.org/) or TheSportsDB
 - Leaderboard showing participants' current rankings and points breakdown
 - AI-assisted "lucky dip" — generate Poisson-model predictions with a single click
 - Fully responsive: iPhone portrait → 4K landscape
@@ -101,7 +101,11 @@ services:
       EMAIL_FROM: noreply@example.com
       EMAIL_USE_TLS: "true"
       EMAIL_USE_SSL: "false"
+      FOOTBALL_PROVIDER: football-data-org
       FOOTBALL_DATA_ORG_API_KEY: ""
+      THESPORTSDB_API_KEY: "3"
+      THESPORTSDB_LEAGUE_ID: "4330"
+      THESPORTSDB_SEASON: "2026-2027"
       SENTRY_DSN: ""
 
 volumes:
@@ -137,8 +141,12 @@ docker compose -f /path/to/docker-compose.yml up -d
 | `EMAIL_FROM` | `noreply@example.com` | Sender address for outgoing emails. |
 | `EMAIL_USE_TLS` | `true` | Use STARTTLS after connecting. Typical for port 587. |
 | `EMAIL_USE_SSL` | `false` | Use SMTP_SSL (implicit TLS). Typical for port 465. When `true`, `EMAIL_USE_TLS` is ignored. |
+| `FOOTBALL_PROVIDER` | `football-data-org` | Fixture/result provider for provider-neutral admin endpoints. Supported values: `football-data-org`, `thesportsdb`. |
 | `FOOTBALL_DATA_ORG_API_KEY` | `""` | [football-data.org](https://www.football-data.org/) API key for importing fixtures and results. |
 | `FOOTBALL_DATA_ORG_API_TIER` | `TIER_ONE` | API tier for rate-limit handling (`TIER_ONE`–`TIER_FOUR`). |
+| `THESPORTSDB_API_KEY` | `3` | TheSportsDB API key. The default public test key is useful for development only. |
+| `THESPORTSDB_LEAGUE_ID` | `4330` | TheSportsDB league ID. `4330` is Scottish Premiership / Scottish Premier League. |
+| `THESPORTSDB_SEASON` | `2026-2027` | TheSportsDB season string to import. |
 | `SENTRY_DSN` | `""` | [Sentry](https://sentry.io/) DSN for error monitoring (backend + frontend). Leave empty to disable. |
 | `ONLY_SUPERUSERS_CAN_CREATE_TOURNAMENTS` | `false` | When `true`, only superusers may create new tournaments. Use `manage.py promote_superuser <user_id>` to grant superuser status. |
 
@@ -207,7 +215,8 @@ sweepstake/
 │   │   ├── teams/             # Team data
 │   │   ├── users/             # Auth, accounts, password reset, email
 │   │   ├── stats/             # Leaderboard and scoring aggregates
-│   │   └── api_football_data_org/  # football-data.org import scripts
+│   │   ├── providers/          # pluggable fixture/result providers
+│   │   └── api_football_data_org/  # legacy football-data.org endpoint wrappers
 │   └── tests/
 ├── frontend/
 │   └── src/
@@ -260,11 +269,14 @@ cd backend
 pytest tests/
 ```
 
-#### Importing fixtures from football-data.org
+#### Importing fixtures from a provider
 
-1. Get a free API key at [football-data.org](https://www.football-data.org/)
-2. Set `FOOTBALL_DATA_ORG_API_KEY` in `data/.env`
-3. Use the admin endpoints at `GET /api/football-data-org/tournaments` to list available competitions, then `POST /api/football-data-org/import/{id}` to import one
+1. Set `FOOTBALL_PROVIDER` to `football-data-org` or `thesportsdb` in `data/.env`.
+2. For football-data.org, set `FOOTBALL_DATA_ORG_API_KEY`. For TheSportsDB, set `THESPORTSDB_API_KEY`, `THESPORTSDB_LEAGUE_ID` (default `4330`), and `THESPORTSDB_SEASON` (default `2026-2027`).
+3. Use `GET /api/providers/tournaments` to list competitions for the configured provider.
+4. Use `POST /api/providers/import/{provider}/{competition_id}` to import one, for example `POST /api/providers/import/thesportsdb/4330`.
+
+Legacy football-data.org endpoints remain available at `GET /api/football-data-org/tournaments` and `POST /api/football-data-org/import/{id}`.
 
 
 ### ToDos:

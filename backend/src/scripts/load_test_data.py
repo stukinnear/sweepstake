@@ -53,7 +53,8 @@ async def load_test_data() -> None:
                 db,
                 tournament_models.TournamentCreate(
                     name="TEST FIFA World Cup 2026",
-                    football_data_org_id=2000,
+                    external_provider="football-data-org",
+                    external_id="2000",
                 ),
                 user.id,
             )

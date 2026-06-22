@@ -56,6 +56,8 @@ class TournamentBase(SQLModel):
     """Shared tournament fields used across create, read, and update schemas."""
     name: str = Field(..., min_length=1, max_length=255)
     stake: Optional[str] = Field(default=None)
+    external_provider: Optional[str] = Field(default=None, max_length=64)
+    external_id: Optional[str] = Field(default=None, max_length=128)
     football_data_org_id: Optional[int] = Field(default=None, unique=False)
     first_place_team_id: Optional[int] = Field(default=None)
     second_place_team_id: Optional[int] = Field(default=None)
@@ -80,6 +82,9 @@ class Tournament(TournamentBase, table=True):
         default=PredictionsOpen.automatic,
         sa_column=sa.Column(sa.String(16), nullable=False, default="automatic", server_default="automatic"),
     )
+    external_provider: Optional[str] = Field(default=None, sa_column=sa.Column(sa.String(64), nullable=True, index=True))
+    external_id: Optional[str] = Field(default=None, sa_column=sa.Column(sa.String(128), nullable=True, index=True))
+    # Legacy column retained so existing installs do not drop provider IDs during startup auto-migration.
     football_data_org_id: Optional[int] = Field(default=None, unique=False)
     first_place_team_id: Optional[int] = Field(default=None, sa_column=sa.Column(sa.Integer, sa.ForeignKey("team.id", use_alter=True, name="fk_tournament_first_place_team_id"), nullable=True))
     second_place_team_id: Optional[int] = Field(default=None, sa_column=sa.Column(sa.Integer, sa.ForeignKey("team.id", use_alter=True, name="fk_tournament_second_place_team_id"), nullable=True))
@@ -153,7 +158,6 @@ class TournamentRead(TournamentBase):
 
     id: int
     join_code: str
-    football_data_org_id: Optional[int] = None
     admin_lst: List[dict] = Field(default_factory=list, description="List of admin users with id and user_name")
     participant_lst: List[dict] = Field(default_factory=list, description="List of participant users with id and user_name")
     start_date: Optional[date] = None

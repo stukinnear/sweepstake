@@ -25,7 +25,8 @@ async def create_team_endpoint(
     - **name**: Team name (required)
     - **iso_code**: ISO country/team code (e.g. "DE", "FR")
     - **image_url**: URL to the team's flag or logo
-    - **football_data_org_id**: Optional football-data.org team ID
+    - **external_provider**: Optional provider ID for imported teams
+    - **external_id**: Optional provider team ID
     - **group_id**: Optional ID of the group this team belongs to
 
     Returns the created team.
@@ -91,7 +92,8 @@ async def patch_team_endpoint(
     - **name**: Team name
     - **iso_code**: ISO country/team code (e.g. "DE", "FR")
     - **image_url**: URL to the team's flag or logo
-    - **football_data_org_id**: Optional football-data.org team ID
+    - **external_provider**: Optional provider ID for imported teams
+    - **external_id**: Optional provider team ID
     - **group_id**: Optional ID of the group this team belongs to
 
     Returns the updated team or 404 if not found.

@@ -43,22 +43,32 @@ async def _update_all_tournaments() -> None:
 
     from src.database import AsyncSessionLocal
     from src.tournaments.models import Tournament
-    from src.api_football_data_org.update_tournament import update_tournaments
+    from src.providers import get_provider
 
     async with AsyncSessionLocal() as db:
         result = await db.execute(
-            select(Tournament.football_data_org_id)
-            .where(Tournament.football_data_org_id.is_not(None))
+            select(Tournament.external_provider, Tournament.external_id, Tournament.football_data_org_id)
+            .where(
+                (Tournament.external_provider.is_not(None) & Tournament.external_id.is_not(None))
+                | Tournament.football_data_org_id.is_not(None)
+            )
             .distinct()
         )
-        ids = result.scalars().all()
+        provider_ids = {
+            (
+                provider_id or "football-data-org",
+                external_id or str(football_data_org_id),
+            )
+            for provider_id, external_id, football_data_org_id in result.all()
+            if external_id is not None or football_data_org_id is not None
+        }
 
-    for fdo_id in ids:
+    for provider_id, competition_id in provider_ids:
         async with AsyncSessionLocal() as db:
             try:
-                await update_tournaments(db, fdo_id)
+                await get_provider(provider_id).update_competition(db, competition_id)
             except Exception:
-                logger.exception("Failed to update tournament football_data_org_id=%s", fdo_id)
+                logger.exception("Failed to update tournament provider=%s external_id=%s", provider_id, competition_id)
 
 
 async def _cleanup_old_sessions() -> None:
@@ -213,7 +223,7 @@ def build_scheduler() -> AsyncIOScheduler:
             _send_upcoming_match_reminders,
             CronTrigger(hour=15, minute=0, timezone=settings.tz),
         )
-    if settings.football_data_org_api_key:
+    if settings.football_provider == "thesportsdb" or settings.football_data_org_api_key:
         scheduler.add_job(
             _update_all_tournaments,
             CronTrigger(minute="*/30", timezone=settings.tz),

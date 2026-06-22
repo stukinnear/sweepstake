@@ -14,7 +14,7 @@ from src.users.routers import verify_access_token
 from src.users.crud import get_user_by_id
 from src.emails.welcome_email import send_competition_welcome_email
 from src.emails.payment_reminder_email import send_payment_reminder_email
-from src.api_football_data_org.update_tournament import update_tournaments
+from src.providers import get_provider
 from src.config import settings
 from src.logging_config import get_logger
 
@@ -35,7 +35,8 @@ async def create_tournament_endpoint(
 
     - **name**: Tournament name (required)
     - **stake**: Optional multi-line text describing the stake or prize for the tournament
-    - **football_data_org_id**: Optional football-data.org tournament ID for automatic schedule and score fetching
+    - **external_provider**: Optional provider ID (`football-data-org` or `thesportsdb`) for automatic schedule and score fetching
+    - **external_id**: Optional provider competition/league ID for automatic schedule and score fetching
     - **first_place_team_id**: Optional team ID for the tournament winner
     - **second_place_team_id**: Optional team ID for the runner-up
     - **third_place_team_id**: Optional team ID for third place
@@ -150,7 +151,8 @@ async def patch_tournament_endpoint(
 
     - **tournament_id**: The unique identifier of the tournament to update
     - **name**: Tournament name
-    - **football_data_org_id**: Optional football-data.org tournament ID for automatic schedule and score fetching
+    - **external_provider**: Optional provider ID (`football-data-org` or `thesportsdb`) for automatic schedule and score fetching
+    - **external_id**: Optional provider competition/league ID for automatic schedule and score fetching
     - **first_place_team_id**: Optional team ID for the tournament winner
     - **second_place_team_id**: Optional team ID for the runner-up
     - **third_place_team_id**: Optional team ID for third place
@@ -392,7 +394,7 @@ async def tournament_admin_action_endpoint(
     - **tournament_id**: The unique identifier of the tournament
     - **action**: One of:
       - `send-payment-reminder` — email all participants whose stake is unpaid
-      - `update-tournament` — re-import schedule and results from football-data.org (requires `football_data_org_id`)
+      - `update-tournament` — re-import schedule and results from the tournament's configured provider (requires `external_provider` and `external_id`)
       - `send-welcome-email` — re-send the welcome email to all participants
 
     Returns 204 No Content on success.
@@ -437,12 +439,14 @@ async def tournament_admin_action_endpoint(
         )
 
     elif body.action == models.TournamentAdminAction.update_tournament:
-        if not tournament.football_data_org_id:
-            raise CustomError("This tournament has no football-data.org ID configured", status_code=400)
+        provider_id = tournament.external_provider or ("football-data-org" if tournament.football_data_org_id else None)
+        competition_id = tournament.external_id or (str(tournament.football_data_org_id) if tournament.football_data_org_id else None)
+        if not provider_id or not competition_id:
+            raise CustomError("This tournament has no external provider ID configured", status_code=400)
         background_tasks.add_task(
-            update_tournaments,
+            get_provider(provider_id).update_competition,
             db,
-            tournament.football_data_org_id,
+            competition_id,
         )
 
     elif body.action == models.TournamentAdminAction.send_welcome_email:

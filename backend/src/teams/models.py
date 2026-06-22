@@ -21,6 +21,8 @@ class TeamBase(SQLModel):
     name: str = Field(..., min_length=1, max_length=255)
     iso_code: Optional[str] = Field(default=None, max_length=10)
     image_url: Optional[str] = Field(default=None, max_length=512)
+    external_provider: Optional[str] = Field(default=None, max_length=64)
+    external_id: Optional[str] = Field(default=None, max_length=128)
     football_data_org_id: Optional[int] = Field(default=None)
     group_id: Optional[int] = Field(default=None)
 
@@ -37,6 +39,10 @@ class Team(TeamBase, table=True):
         default=None,
         sa_column=sa.Column(sa.Integer, sa.ForeignKey("tournament_group.id", ondelete="SET NULL"), nullable=True, index=True)
     )
+    external_provider: Optional[str] = Field(default=None, sa_column=sa.Column(sa.String(64), nullable=True, index=True))
+    external_id: Optional[str] = Field(default=None, sa_column=sa.Column(sa.String(128), nullable=True, index=True))
+    # Legacy column retained so existing installs do not drop provider IDs during startup auto-migration.
+    football_data_org_id: Optional[int] = Field(default=None)
 
     group: Optional["Group"] = Relationship(  # type: ignore[name-defined]
         sa_relationship_kwargs={
@@ -96,6 +102,8 @@ class TeamRead(TeamBase):
                 "name": data.name,
                 "iso_code": data.iso_code,
                 "image_url": data.image_url,
+                "external_provider": data.external_provider,
+                "external_id": data.external_id,
                 "football_data_org_id": data.football_data_org_id,
                 "group_id": data.group_id,
                 "tournament_id": data.tournament_id,

@@ -53,6 +53,7 @@ from src.predictions.routers import (
 )
 from src.users.routers import router as auth_router
 from src.api_football_data_org.routers import router as football_data_org_router
+from src.providers.routers import router as providers_router
 from src.stats.routers import router as stats_router
 from src.exceptions import CustomError, custom_error_handler
 from src.scripts.load_test_data import load_test_data
@@ -96,6 +97,10 @@ tags_metadata = [
     {
         "name": "stats",
         "description": "Statistics and leaderboard endpoints. View aggregated points leaderboard and all participants' predictions once an event has started.",
+    },
+    {
+        "name": "providers",
+        "description": "Provider-neutral football fixture and result import endpoints.",
     },
     {
         "name": "general",
@@ -397,6 +402,7 @@ def get_config():
 # include routers
 app.include_router(auth_router)
 app.include_router(football_data_org_router)
+app.include_router(providers_router)
 app.include_router(tournaments_router)
 app.include_router(teams_router)
 app.include_router(matches_router)

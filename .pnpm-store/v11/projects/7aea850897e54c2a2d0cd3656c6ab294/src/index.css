@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@keyframes now-line-sweep {
+  0%   { left: -35%; }
+  100% { left: 105%; }
+}
+.animate-now-line {
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 30%;
+  animation: now-line-sweep 2s ease-in-out infinite;
+}
+
+@keyframes now-line-sweep-left {
+  0%   { left: 105%; }
+  100% { left: -35%; }
+}
+.animate-now-line-left {
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 30%;
+  animation: now-line-sweep-left 2s ease-in-out infinite;
+}
+
+@keyframes now-text-pulse {
+  0%, 100% { opacity: 0.5; }
+  50%       { opacity: 1; }
+}
+.animate-now-text {
+  animation: now-text-pulse 2s ease-in-out infinite;
+}
+
+@keyframes live-border-pulse {
+  0%, 100% { border-color: rgba(239, 68, 68, 0.25); }
+  50%       { border-color: rgba(239, 68, 68, 0.9); }
+}
+.animate-live-border {
+  animation: live-border-pulse 1.5s ease-in-out infinite;
+}

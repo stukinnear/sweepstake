@@ -28,7 +28,8 @@ async def create_match_endpoint(
     - **stage_id**: Optional ID of the stage this match belongs to
     - **home_goals**: Home team goals (optional, set after match)
     - **away_goals**: Away team goals (optional, set after match)
-    - **football_data_org_id**: Optional football-data.org match ID
+    - **external_provider**: Optional provider ID for imported matches
+    - **external_id**: Optional provider match ID
 
     Returns the created match with nested team details.
     """
@@ -97,7 +98,8 @@ async def patch_match_endpoint(
     - **stage_id**: Optional ID of the stage this match belongs to
     - **home_goals**: Home team goals
     - **away_goals**: Away team goals
-    - **football_data_org_id**: Optional football-data.org match ID
+    - **external_provider**: Optional provider ID for imported matches
+    - **external_id**: Optional provider match ID
 
     Returns the updated match or 404 if not found.
     """

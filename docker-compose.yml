@@ -74,7 +74,11 @@ services:
       # EMAIL_HOST_PASSWORD: ""
       # EMAIL_USE_TLS: "true"
       # EMAIL_USE_SSL: "false"
+      # FOOTBALL_PROVIDER: "football-data-org"  # or "thesportsdb"
       # FOOTBALL_DATA_ORG_API_KEY: ""
+      # THESPORTSDB_API_KEY: "3"
+      # THESPORTSDB_LEAGUE_ID: "4330"
+      # THESPORTSDB_SEASON: "2026-2027"
       # SENTRY_DSN: ""  # Set to your Sentry DSN to enable error monitoring (backend + frontend)
 
 volumes:

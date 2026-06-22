@@ -59,7 +59,8 @@ class WinnerPredictionGroup(SQLModel):
     name: Optional[str] = None
     iso_code: Optional[str] = None
     image_url: Optional[str] = None
-    football_data_org_id: Optional[int] = None
+    external_provider: Optional[str] = None
+    external_id: Optional[str] = None
     group_id: Optional[int] = None
     tournament_id: Optional[int] = None
     group_name: Optional[str] = None

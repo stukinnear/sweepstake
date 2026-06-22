@@ -27,7 +27,7 @@ from src.tournaments.crud import get_tournament_by_id
 from src.users.crud import get_user_by_id, get_user_by_email, update_user
 from src.users.models import UserUpdate
 from src.emails.welcome_email import send_competition_welcome_email
-from src.api_football_data_org.update_tournament import update_tournaments
+from src.providers import get_provider
 from src.predictions import scoring as predictions_scoring
 
 
@@ -97,24 +97,36 @@ async def _cmd_update_tournament(tournament_id: int | None = None) -> None:
             if tournament is None:
                 print(f"Error: tournament {tournament_id} not found.", file=sys.stderr)
                 sys.exit(1)
-            if not tournament.football_data_org_id:
-                print(f"Error: tournament {tournament_id} has no football_data_org_id set.", file=sys.stderr)
+            provider_id = tournament.external_provider or ("football-data-org" if tournament.football_data_org_id else None)
+            competition_id = tournament.external_id or (str(tournament.football_data_org_id) if tournament.football_data_org_id else None)
+            if not provider_id or not competition_id:
+                print(f"Error: tournament {tournament_id} has no external provider ID set.", file=sys.stderr)
                 sys.exit(1)
-            football_data_org_ids = [tournament.football_data_org_id]
+            provider_ids = [(provider_id, competition_id)]
         else:
             result = await db.execute(
-                select(Tournament.football_data_org_id)
-                .where(Tournament.football_data_org_id.is_not(None))
+                select(Tournament.external_provider, Tournament.external_id, Tournament.football_data_org_id)
+                .where(
+                    (Tournament.external_provider.is_not(None) & Tournament.external_id.is_not(None))
+                    | Tournament.football_data_org_id.is_not(None)
+                )
                 .distinct()
             )
-            football_data_org_ids = result.scalars().all()
-            if not football_data_org_ids:
-                print("No tournaments with a football_data_org_id found.", file=sys.stderr)
+            provider_ids = {
+                (
+                    provider_id or "football-data-org",
+                    external_id or str(football_data_org_id),
+                )
+                for provider_id, external_id, football_data_org_id in result.all()
+                if external_id is not None or football_data_org_id is not None
+            }
+            if not provider_ids:
+                print("No tournaments with an external provider ID found.", file=sys.stderr)
                 sys.exit(1)
 
-        for fdo_id in football_data_org_ids:
-            print(f"Fetching match data for football-data.org ID {fdo_id}…")
-            await update_tournaments(db, fdo_id)
+        for provider_id, competition_id in provider_ids:
+            print(f"Fetching match data for {provider_id} ID {competition_id}...")
+            await get_provider(provider_id).update_competition(db, competition_id)
         print("Done.")
 
 

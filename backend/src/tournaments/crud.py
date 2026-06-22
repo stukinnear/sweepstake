@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, or_, func, nullslast
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import selectinload
-from src.api_football_data_org.import_tournament import import_tournament
+from src.providers import get_provider
 from src.tournaments import models
 from src.matches.models import Match
 from src.predictions import scoring as predictions_scoring
@@ -74,7 +74,15 @@ async def create_tournament(db: AsyncSession, tournament: models.TournamentCreat
     db_tournament = models.Tournament(
         name=tournament.name,
         stake=tournament.stake,
-        football_data_org_id=tournament.football_data_org_id,
+        external_provider=tournament.external_provider or ("football-data-org" if tournament.football_data_org_id else None),
+        external_id=tournament.external_id or (str(tournament.football_data_org_id) if tournament.football_data_org_id else None),
+        football_data_org_id=(
+            int(tournament.external_id or tournament.football_data_org_id)
+            if (tournament.external_provider == "football-data-org" or tournament.football_data_org_id)
+            and (tournament.external_id is not None or tournament.football_data_org_id is not None)
+            and str(tournament.external_id or tournament.football_data_org_id).isdigit()
+            else None
+        ),
         first_place_team_id=tournament.first_place_team_id,
         second_place_team_id=tournament.second_place_team_id,
         third_place_team_id=tournament.third_place_team_id,
@@ -96,9 +104,14 @@ async def create_tournament(db: AsyncSession, tournament: models.TournamentCreat
 
     await db.commit()
 
-    # If football_data_org_id is provided, import tournament data from football-data.org
-    if tournament.football_data_org_id is not None:
-        await import_tournament(db, competition_id=tournament.football_data_org_id, tournament=db_tournament)
+    provider_id = tournament.external_provider or ("football-data-org" if tournament.football_data_org_id else None)
+    external_id = tournament.external_id or (str(tournament.football_data_org_id) if tournament.football_data_org_id else None)
+    if provider_id and external_id:
+        await get_provider(provider_id).import_competition(
+            db,
+            competition_id=external_id,
+            tournament=db_tournament,
+        )
 
     return await get_tournament_by_id(db, db_tournament.id)
 
