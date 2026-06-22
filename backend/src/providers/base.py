@@ -206,7 +206,8 @@ class FootballProvider(ABC):
             team.external_id = provider_team.external_id
             team.name = provider_team.name
             team.iso_code = provider_team.iso_code
-            team.image_url = provider_team.image_url
+            if provider_team.image_url:
+                team.image_url = provider_team.image_url
             if group_id is not None:
                 team.group_id = group_id
         team_id_map[key] = team.id

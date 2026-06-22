@@ -73,8 +73,23 @@ class TheSportsDBProvider(FootballProvider):
             external_id=str(team_id),
             name=(team or {}).get("strTeam") or event.get(f"str{side}Team") or "TBD",
             iso_code=(team or {}).get("strTeamShort"),
-            image_url=(team or {}).get("strBadge") or (team or {}).get("strTeamBadge"),
+            image_url=self._image_url(
+                (team or {}).get("strBadge")
+                or (team or {}).get("strTeamBadge")
+                or (team or {}).get("strLogo")
+                or event.get(f"str{side}TeamBadge")
+                or event.get(f"str{side}TeamLogo")
+            ),
         )
+
+    def _image_url(self, value: str | None) -> str | None:
+        if not value:
+            return None
+        if value.startswith("//"):
+            return f"https:{value}"
+        if value.startswith("/"):
+            return f"https://www.thesportsdb.com{value}"
+        return value
 
     def _parse_datetime(self, event: dict) -> datetime:
         timestamp = event.get("strTimestamp")

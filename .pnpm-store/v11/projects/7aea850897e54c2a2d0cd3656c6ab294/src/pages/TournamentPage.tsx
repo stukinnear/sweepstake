@@ -17,6 +17,13 @@ import { MatchStatsModal } from '../modals/matchStats'
 import { formatDateTime } from '../utils/datetime'
 import { groupByStage } from '../utils/match'
 
+function teamImageUrl(value: string | null | undefined): string | null {
+  if (!value) return null
+  if (value.startsWith('//')) return `https:${value}`
+  if (value.startsWith('/')) return `https://www.thesportsdb.com${value}`
+  return value
+}
+
 export function TournamentPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -381,12 +388,13 @@ export function TournamentPage() {
                         <span className="text-sm text-right text-gray-900 dark:text-gray-100 truncate">
                           {match.home_team?.name ?? '—'}
                         </span>
-                        {match.home_team?.image_url ? (
+                        {teamImageUrl(match.home_team?.image_url) ? (
                           <img
-                            src={match.home_team.image_url}
+                            src={teamImageUrl(match.home_team?.image_url)!}
                             alt={match.home_team.name}
                             decoding="async"
                             referrerPolicy="no-referrer"
+                            onError={(e) => { e.currentTarget.style.visibility = 'hidden' }}
                             className="h-7 w-7 flex-shrink-0 rounded-full object-cover border border-gray-200 dark:border-gray-700"
                           />
                         ) : (
@@ -409,12 +417,13 @@ export function TournamentPage() {
                             : 'hover:bg-gray-100 dark:hover:bg-gray-700',
                         ].join(' ')}
                       >
-                        {match.away_team?.image_url ? (
+                        {teamImageUrl(match.away_team?.image_url) ? (
                           <img
-                            src={match.away_team.image_url}
+                            src={teamImageUrl(match.away_team?.image_url)!}
                             alt={match.away_team.name}
                             decoding="async"
                             referrerPolicy="no-referrer"
+                            onError={(e) => { e.currentTarget.style.visibility = 'hidden' }}
                             className="h-7 w-7 flex-shrink-0 rounded-full object-cover border border-gray-200 dark:border-gray-700"
                           />
                         ) : (
