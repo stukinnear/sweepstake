@@ -406,7 +406,11 @@ export function EditTournamentModal({
   const [currentAction, setCurrentAction] = useState<TournamentAdminAction | null>(null)
   const isLoading = isSaving || isDeleting
 
-  const COOLDOWN_MS = 30 * 60 * 1000
+  const COOLDOWN_MS_BY_ACTION: Record<TournamentAdminAction, number> = {
+    'send-payment-reminder': 30 * 60 * 1000,
+    'update-tournament': 60 * 1000,
+    'send-welcome-email': 30 * 60 * 1000,
+  }
   const lsKey = (action: TournamentAdminAction) => `action_cooldown_${tournament.id}_${action}`
   const [lastTriggered, setLastTriggered] = useState<Partial<Record<TournamentAdminAction, number>>>(() => {
     const actions: TournamentAdminAction[] = ['send-payment-reminder', 'update-tournament', 'send-welcome-email']
@@ -420,7 +424,7 @@ export function EditTournamentModal({
   function minsLeft(action: TournamentAdminAction): number | null {
     const ts = lastTriggered[action]
     if (!ts) return null
-    const left = COOLDOWN_MS - (Date.now() - ts)
+    const left = COOLDOWN_MS_BY_ACTION[action] - (Date.now() - ts)
     return left > 0 ? Math.ceil(left / 60_000) : null
   }
 
@@ -735,7 +739,7 @@ export function EditTournamentModal({
                   : <RefreshCw size={12} />}
                 {currentAction === 'update-tournament'
                   ? 'Updating…'
-                  : mins !== null ? `API Updating… (~${mins}m)` : 'API Update'}
+                  : mins !== null ? `API Update available in ~${mins}m` : 'API Update'}
               </button>
             )
           })()}
