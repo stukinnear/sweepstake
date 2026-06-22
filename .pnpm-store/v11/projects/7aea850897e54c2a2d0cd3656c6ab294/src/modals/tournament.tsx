@@ -46,12 +46,17 @@ type PointState = {
   setGroupWinnerPoints: (v: string) => void
   stageWinnerPoints: string
   setStageWinnerPoints: (v: string) => void
+  showGroupStage?: boolean
 }
 
 function providerSelection(value: string): { provider?: string; id?: string } {
   if (!value) return {}
   const [provider, ...rest] = value.split(':')
   return { provider, id: rest.join(':') }
+}
+
+function isLeagueSelection(value: string): boolean {
+  return providerSelection(value).provider === 'thesportsdb'
 }
 
 function PointFields(p: PointState & { disabled?: boolean }) {
@@ -64,9 +69,12 @@ function PointFields(p: PointState & { disabled?: boolean }) {
     { label: '👥 Group winner points', value: p.groupWinnerPoints, set: p.setGroupWinnerPoints },
     { label: '🏆 Stage winner points', value: p.stageWinnerPoints, set: p.setStageWinnerPoints },
   ]
+  const visibleFields = p.showGroupStage
+    ? fields
+    : fields.filter(({ set }) => set !== p.setGroupWinnerPoints && set !== p.setStageWinnerPoints)
   return (
     <div className="grid grid-cols-2 gap-3">
-      {fields.map(({ label, value, set }) => (
+      {visibleFields.map(({ label, value, set }) => (
         <div key={label}>
           <FieldLabel>{label}</FieldLabel>
           <input
@@ -262,7 +270,7 @@ function TournamentInfoFields({
           <span className="relative inline-flex items-center group/tip cursor-help">
             <HelpCircle size={13} className="text-gray-400 dark:text-gray-500" />
             <span className="pointer-events-none absolute bottom-full left-0 mb-2 w-72 rounded-lg bg-gray-800 dark:bg-gray-900 text-white text-xs font-normal px-3 py-2 shadow-lg opacity-0 group-hover/tip:opacity-100 transition-opacity z-50 normal-case tracking-normal leading-relaxed">
-              With <strong>Automatic</strong>, tournament, group, and stage predictions are automatically closed on the day of their respective first match.
+              With <strong>Automatic</strong>, winner-style predictions are automatically closed on the day of their first relevant match.
               {' '}<strong>Open</strong> keeps those predictions open regardless of schedule.
               {' '}<strong>Closed</strong> prevents users from submitting tournament, group, and stage predictions.
               {' '}Match predictions are always controlled by the individual match kick-off time.
@@ -302,10 +310,11 @@ export function CreateTournamentModal({ onClose }: { onClose: () => void }) {
   const [thirdPlacePoints, setThirdPlacePoints] = useState('')
   const [matchWinnerPoints, setMatchWinnerPoints] = useState('3')
   const [matchScorePoints, setMatchScorePoints] = useState('5')
-  const [groupWinnerPoints, setGroupWinnerPoints] = useState('8')
+  const [groupWinnerPoints, setGroupWinnerPoints] = useState('')
   const [stageWinnerPoints, setStageWinnerPoints] = useState('')
   const [predictionsOpen, setPredictionsOpen] = useState<PredictionsOpen>('automatic')
   const [error, setError] = useState<string | null>(null)
+  const showGroupStage = !isLeagueSelection(externalId)
 
   async function handleCreate() {
     if (!name.trim()) return
@@ -322,8 +331,8 @@ export function CreateTournamentModal({ onClose }: { onClose: () => void }) {
         third_place_points: thirdPlacePoints !== '' ? Number(thirdPlacePoints) : undefined,
         match_winner_points: matchWinnerPoints !== '' ? Number(matchWinnerPoints) : undefined,
         match_score_points: matchScorePoints !== '' ? Number(matchScorePoints) : undefined,
-        group_winner_points: groupWinnerPoints !== '' ? Number(groupWinnerPoints) : undefined,
-        stage_winner_points: stageWinnerPoints !== '' ? Number(stageWinnerPoints) : undefined,
+        group_winner_points: showGroupStage && groupWinnerPoints !== '' ? Number(groupWinnerPoints) : undefined,
+        stage_winner_points: showGroupStage && stageWinnerPoints !== '' ? Number(stageWinnerPoints) : undefined,
         predictions_open: predictionsOpen,
       }).unwrap()
       onClose()
@@ -363,6 +372,7 @@ export function CreateTournamentModal({ onClose }: { onClose: () => void }) {
           setGroupWinnerPoints={setGroupWinnerPoints}
           stageWinnerPoints={stageWinnerPoints}
           setStageWinnerPoints={setStageWinnerPoints}
+          showGroupStage={showGroupStage}
           disabled={isLoading}
         />
         <ErrorMsg msg={error} />
@@ -458,6 +468,7 @@ export function EditTournamentModal({
   )
   const [error, setError] = useState<string | null>(null)
   const [memberError, setMemberError] = useState<string | null>(null)
+  const showGroupStage = !isLeagueSelection(externalId) || groupWinnerPoints !== '' || stageWinnerPoints !== ''
 
   async function handleToggleStakePaid(userId: number, isCurrentlyPaid: boolean) {
     setMemberError(null)
@@ -612,6 +623,7 @@ export function EditTournamentModal({
           setGroupWinnerPoints={setGroupWinnerPoints}
           stageWinnerPoints={stageWinnerPoints}
           setStageWinnerPoints={setStageWinnerPoints}
+          showGroupStage={showGroupStage}
           firstPlaceTeamId={firstPlaceTeamId}
           setFirstPlaceTeamId={setFirstPlaceTeamId}
           secondPlaceTeamId={secondPlaceTeamId}
