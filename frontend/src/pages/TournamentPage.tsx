@@ -391,7 +391,7 @@ export function TournamentPage() {
                         {teamImageUrl(match.home_team?.image_url) ? (
                           <img
                             src={teamImageUrl(match.home_team?.image_url)!}
-                            alt={match.home_team.name}
+                            alt={match.home_team?.name ?? 'Home team'}
                             decoding="async"
                             referrerPolicy="no-referrer"
                             onError={(e) => { e.currentTarget.style.visibility = 'hidden' }}
@@ -420,7 +420,7 @@ export function TournamentPage() {
                         {teamImageUrl(match.away_team?.image_url) ? (
                           <img
                             src={teamImageUrl(match.away_team?.image_url)!}
-                            alt={match.away_team.name}
+                            alt={match.away_team?.name ?? 'Away team'}
                             decoding="async"
                             referrerPolicy="no-referrer"
                             onError={(e) => { e.currentTarget.style.visibility = 'hidden' }}
