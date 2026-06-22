@@ -161,6 +161,51 @@ const ADMIN_EXTRA_PAGES: GuidePage[] = [
 // Live scoring rules — fetches tournament data from the current URL
 // ---------------------------------------------------------------------------
 
+function DeadlinesBody({ hasGroupStagePredictions }: { hasGroupStagePredictions: boolean }) {
+  return (
+    <div className="space-y-3 text-sm text-gray-700 dark:text-gray-300">
+      {hasGroupStagePredictions && (
+        <>
+          <p className="font-medium text-gray-800 dark:text-gray-200 mb-1">Tournament / Stage / Group Predictions</p>
+          <p>Submit your predictions <b>1 day until 23:59 before</b> the first match of the tournament / stage / group. On the top right you can see when the predictions close.</p>
+          <img
+            src="/guide-prediction-group.webp"
+            alt="Group winner predictions with a deadline shown on the top right"
+            className="w-80 rounded-lg border border-gray-200 dark:border-gray-700"
+          />
+        </>
+      )}
+      <p className="font-medium text-gray-800 dark:text-gray-200 mb-1">Match Predictions</p>
+      <p>Submit your predictions <b>up 1 minute before</b> the match kicks off. The red line with the countdown shows the remaining time.</p>
+      <img
+        src="/guide-prediction-match.webp"
+        alt="Match predictions with a deadline shown on the top right"
+        className="w-80 rounded-lg border border-gray-200 dark:border-gray-700"
+      />
+      <p className="text-xs text-gray-400 dark:text-gray-500"><b>Note:</b> The organiser can add predictions for you even past the deadline in case you joined the competition late.</p>
+    </div>
+  )
+}
+
+function ViewPredictionsBody({ hasGroupStagePredictions }: { hasGroupStagePredictions: boolean }) {
+  return (
+    <div className="space-y-3 text-sm text-gray-700 dark:text-gray-300">
+      <p>If predictions for a match{hasGroupStagePredictions ? ', group, stage,' : ''} or the tournament winner are closed, a ðŸ” icon will appear:</p>
+      <img
+        src="/guide-results-button.webp"
+        alt="Button for viewing others' predictions"
+        className="w-80 rounded-lg border border-gray-200 dark:border-gray-700"
+      />
+      <p>By clicking on it, you can view your friends' predictions:</p>
+      <img
+        src="/guide-results-popup.webp"
+        alt="Popup showing other players' predictions"
+        className="w-80 rounded-lg border border-gray-200 dark:border-gray-700"
+      />
+    </div>
+  )
+}
+
 function ScoringRulesBody({ tournamentId }: { tournamentId: number | null }) {
   const { data: tournament } = useGetTournamentQuery(tournamentId!, { skip: tournamentId == null })
 
@@ -168,6 +213,7 @@ function ScoringRulesBody({ tournamentId }: { tournamentId: number | null }) {
     return <p className="text-sm text-gray-500 dark:text-gray-400">Loading scoring rules…</p>
   }
 
+  const showGroupStage = tournament.external_provider !== 'thesportsdb'
   const rules: { label: string; points: number | null }[] = [
     { label: '🥇 Correct tournament winner', points: tournament.first_place_points },
     { label: '🥈 Correct runner-up', points: tournament.second_place_points },
@@ -177,6 +223,7 @@ function ScoringRulesBody({ tournamentId }: { tournamentId: number | null }) {
     { label: '⚽ Correct match winner', points: tournament.match_winner_points },
     { label: '🎯 Exact match score', points: tournament.match_score_points },
   ].filter((r) => r.points != null && r.points !== 0)
+    .filter((r) => showGroupStage || (!r.label.toLowerCase().includes('group') && !r.label.toLowerCase().includes('stage')))
 
   return (
     <div className="space-y-3 text-sm text-gray-700 dark:text-gray-300">
@@ -267,15 +314,30 @@ function GuideModalInner({
 }) {
   useScrollLock()
   const { data: tournament } = useGetTournamentQuery(tournamentId!, { skip: tournamentId == null })
+  const hasGroupStagePredictions = tournament?.external_provider !== 'thesportsdb'
+    && (Boolean(tournament?.group_winner_points) || Boolean(tournament?.stage_winner_points))
+  const participantPages: GuidePage[] = [
+    PARTICIPANT_PAGES[0],
+    {
+      title: 'Deadlines to Submit Your Predictions:',
+      emoji: 'ðŸ“…',
+      body: <DeadlinesBody hasGroupStagePredictions={hasGroupStagePredictions} />,
+    },
+    {
+      title: "View Others' Predictions:",
+      emoji: 'ðŸ”',
+      body: <ViewPredictionsBody hasGroupStagePredictions={hasGroupStagePredictions} />,
+    },
+  ]
 
   const pages: GuidePage[] = [
-    ...PARTICIPANT_PAGES.slice(0, -1),
+    ...participantPages.slice(0, -1),
     {
       title: 'Competition Rules',
       emoji: '📊',
       body: <ScoringRulesBody tournamentId={tournamentId} />,
     },
-    PARTICIPANT_PAGES[PARTICIPANT_PAGES.length - 1],
+    participantPages[participantPages.length - 1],
     ...(tournament?.stake ? [{
       title: 'Pay the Stake',
       emoji: '💰',

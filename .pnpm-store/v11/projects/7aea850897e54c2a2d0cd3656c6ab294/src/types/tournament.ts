@@ -59,8 +59,8 @@ export interface TournamentCreate {
   third_place_points?: number
   match_winner_points?: number
   match_score_points?: number
-  group_winner_points?: number
-  stage_winner_points?: number
+  group_winner_points?: number | null
+  stage_winner_points?: number | null
   predictions_open?: PredictionsOpen
 }
 

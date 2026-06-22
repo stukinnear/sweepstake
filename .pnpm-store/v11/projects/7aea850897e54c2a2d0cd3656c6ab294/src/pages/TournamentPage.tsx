@@ -104,6 +104,7 @@ export function TournamentPage() {
     </button>
   ) : undefined
 
+  const showGroupStageRules = tournament.external_provider !== 'thesportsdb'
   const rules: { label: string; points: number | null }[] = [
     { label: '🥇 Correct tournament winner', points: tournament.first_place_points },
     { label: '🥈 Correct runner-up', points: tournament.second_place_points },
@@ -113,6 +114,7 @@ export function TournamentPage() {
     { label: '⚽ Correct match winner', points: tournament.match_winner_points },
     { label: '🎯 Exact match score', points: tournament.match_score_points },
   ].filter((r) => r.points != null && r.points !== 0)
+    .filter((r) => showGroupStageRules || (!r.label.toLowerCase().includes('group') && !r.label.toLowerCase().includes('stage')))
 
   const cutoff = new Date(Date.now() - 36 * 60 * 60 * 1000)
 

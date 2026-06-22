@@ -314,7 +314,7 @@ export function CreateTournamentModal({ onClose }: { onClose: () => void }) {
   const [stageWinnerPoints, setStageWinnerPoints] = useState('')
   const [predictionsOpen, setPredictionsOpen] = useState<PredictionsOpen>('automatic')
   const [error, setError] = useState<string | null>(null)
-  const showGroupStage = !isLeagueSelection(externalId)
+  const showGroupStage = providerSelection(externalId).provider === 'football-data-org'
 
   async function handleCreate() {
     if (!name.trim()) return
@@ -331,8 +331,8 @@ export function CreateTournamentModal({ onClose }: { onClose: () => void }) {
         third_place_points: thirdPlacePoints !== '' ? Number(thirdPlacePoints) : undefined,
         match_winner_points: matchWinnerPoints !== '' ? Number(matchWinnerPoints) : undefined,
         match_score_points: matchScorePoints !== '' ? Number(matchScorePoints) : undefined,
-        group_winner_points: showGroupStage && groupWinnerPoints !== '' ? Number(groupWinnerPoints) : undefined,
-        stage_winner_points: showGroupStage && stageWinnerPoints !== '' ? Number(stageWinnerPoints) : undefined,
+        group_winner_points: showGroupStage && groupWinnerPoints !== '' ? Number(groupWinnerPoints) : null,
+        stage_winner_points: showGroupStage && stageWinnerPoints !== '' ? Number(stageWinnerPoints) : null,
         predictions_open: predictionsOpen,
       }).unwrap()
       onClose()
@@ -468,7 +468,7 @@ export function EditTournamentModal({
   )
   const [error, setError] = useState<string | null>(null)
   const [memberError, setMemberError] = useState<string | null>(null)
-  const showGroupStage = !isLeagueSelection(externalId) || groupWinnerPoints !== '' || stageWinnerPoints !== ''
+  const showGroupStage = providerSelection(externalId).provider === 'football-data-org' || groupWinnerPoints !== '' || stageWinnerPoints !== ''
 
   async function handleToggleStakePaid(userId: number, isCurrentlyPaid: boolean) {
     setMemberError(null)
@@ -582,8 +582,8 @@ export function EditTournamentModal({
           third_place_points: thirdPlacePoints !== '' ? Number(thirdPlacePoints) : undefined,
           match_winner_points: matchWinnerPoints !== '' ? Number(matchWinnerPoints) : undefined,
           match_score_points: matchScorePoints !== '' ? Number(matchScorePoints) : undefined,
-          group_winner_points: groupWinnerPoints !== '' ? Number(groupWinnerPoints) : undefined,
-          stage_winner_points: stageWinnerPoints !== '' ? Number(stageWinnerPoints) : undefined,
+          group_winner_points: showGroupStage && groupWinnerPoints !== '' ? Number(groupWinnerPoints) : null,
+          stage_winner_points: showGroupStage && stageWinnerPoints !== '' ? Number(stageWinnerPoints) : null,
           predictions_open: predictionsOpen,
         },
       }).unwrap()

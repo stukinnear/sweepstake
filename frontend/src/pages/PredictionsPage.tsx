@@ -525,6 +525,7 @@ export function PredictionsPage() {
   const showTournamentSection =
     !!(tournament.first_place_points || tournament.second_place_points || tournament.third_place_points) &&
     (!restrictToPublished || (tournament.start_date != null && tournament.start_date <= today))
+  const showGroupStagePredictions = tournament.external_provider !== 'thesportsdb'
 
   const visibleGroups = (restrictToPublished
     ? groups.filter((g) => g.start_date != null && g.start_date <= today)
@@ -627,7 +628,7 @@ export function PredictionsPage() {
         )}
 
         {/* Stage winners */}
-        {visibleStages.length > 0 && !!tournament.stage_winner_points && (
+        {showGroupStagePredictions && visibleStages.length > 0 && !!tournament.stage_winner_points && (
           <section>
             <h2 className="text-lg font-semibold mb-3">🏅 Stage Winners
               <span className="ml-2 text-xs font-normal text-gray-400 dark:text-gray-500 normal-case tracking-normal">
@@ -673,7 +674,7 @@ export function PredictionsPage() {
         )}
 
         {/* Group winners */}
-        {visibleGroups.length > 0 && !!tournament.group_winner_points && (
+        {showGroupStagePredictions && visibleGroups.length > 0 && !!tournament.group_winner_points && (
           <section>
             <h2 className="text-lg font-semibold mb-3">🥇 Group Winners</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
