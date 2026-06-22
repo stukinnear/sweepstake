@@ -55,10 +55,6 @@ function providerSelection(value: string): { provider?: string; id?: string } {
   return { provider, id: rest.join(':') }
 }
 
-function isLeagueSelection(value: string): boolean {
-  return providerSelection(value).provider === 'thesportsdb'
-}
-
 function PointFields(p: PointState & { disabled?: boolean }) {
   const fields = [
     { label: '🥇 1st place points', value: p.firstPlacePoints, set: p.setFirstPlacePoints },
