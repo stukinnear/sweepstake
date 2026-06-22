@@ -136,7 +136,9 @@ class TheSportsDBProvider(FootballProvider):
         status = (event.get("strStatus") or "").upper()
         if "FINISH" in status:
             return "FINISHED"
-        if status in {"NS", "NOT STARTED", "SCHEDULED"}:
+        if status in {"NS", "NOT STARTED", "SCHEDULED", "MATCH SCHEDULED", "TBD"}:
+            return "TIMED"
+        if "SCHEDULE" in status or "NOT START" in status:
             return "TIMED"
         if status:
             return status

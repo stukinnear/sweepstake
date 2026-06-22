@@ -90,8 +90,8 @@ class FootballProvider(ABC):
         legacy_hash_file = _DATA_DIR / f"football_data_hash_{competition_id}.txt"
         tournament_ids = await self._tournament_ids(db, competition_id)
         if hash_file.is_file() and hash_file.read_text().strip() == data_hash:
-            if await self._has_missing_team_images(db, tournament_ids):
-                logger.info("No match changes for %s competition %s, but team images are missing; refreshing metadata.", self.provider_id, competition_id)
+            if self.provider_id == "thesportsdb" or await self._has_missing_team_images(db, tournament_ids):
+                logger.info("No match changes for %s competition %s; refreshing team metadata.", self.provider_id, competition_id)
             else:
                 logger.info("No changes detected for %s competition %s; skipping import.", self.provider_id, competition_id)
                 return
@@ -103,7 +103,7 @@ class FootballProvider(ABC):
             and (match.status != "FINISHED" or match.start_datetime >= cutoff)
         ]
 
-        await self._refresh_team_metadata(db, tournament_ids, relevant_matches)
+        await self._refresh_team_metadata(db, tournament_ids, matches)
         if hash_file.is_file() and hash_file.read_text().strip() == data_hash:
             await db.commit()
             return
