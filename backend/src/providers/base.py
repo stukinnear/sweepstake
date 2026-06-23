@@ -37,6 +37,9 @@ class FootballProvider(ABC):
     async def fetch_matches(self, competition_id: str) -> tuple[dict, list[ProviderMatch]]:
         raise NotImplementedError
 
+    async def fetch_teams(self, competition_id: str) -> list[ProviderTeam]:
+        return []
+
     async def import_competition(
         self,
         db: AsyncSession,
@@ -44,6 +47,7 @@ class FootballProvider(ABC):
         tournament: tournament_models.Tournament,
     ) -> tournament_models.Tournament:
         _raw, matches = await self.fetch_matches(competition_id)
+        provider_teams = await self.fetch_teams(competition_id)
         tournament.external_provider = self.provider_id
         tournament.external_id = str(competition_id)
         if self.provider_id == "football-data-org" and str(competition_id).isdigit():
@@ -52,6 +56,9 @@ class FootballProvider(ABC):
         groups_seen: dict[str, int] = {}
         stages_seen: dict[str, int] = {}
         team_id_map: dict[str, int] = {}
+
+        for provider_team in provider_teams:
+            await self._get_or_create_team(db, tournament.id, provider_team, None, team_id_map)
 
         for provider_match in matches:
             group_id = await self._get_or_create_group(db, tournament.id, provider_match.group_name, groups_seen)
@@ -85,6 +92,7 @@ class FootballProvider(ABC):
 
     async def update_competition(self, db: AsyncSession, competition_id: str) -> None:
         raw, matches = await self.fetch_matches(competition_id)
+        provider_teams = await self.fetch_teams(competition_id)
         data_hash = hashlib.md5(str(raw).encode()).hexdigest()
         hash_file = _DATA_DIR / f"provider_hash_{self.provider_id}_{competition_id}.txt"
         legacy_hash_file = _DATA_DIR / f"football_data_hash_{competition_id}.txt"
@@ -104,7 +112,7 @@ class FootballProvider(ABC):
         ]
 
         hash_unchanged = hash_file.is_file() and hash_file.read_text().strip() == data_hash
-        await self._refresh_team_metadata(db, tournament_ids, matches)
+        await self._refresh_team_metadata(db, tournament_ids, matches, provider_teams)
         if hash_unchanged and self.provider_id != "thesportsdb":
             await db.commit()
             return
@@ -149,11 +157,17 @@ class FootballProvider(ABC):
         db: AsyncSession,
         tournament_ids: list[int],
         matches: list[ProviderMatch],
+        teams: list[ProviderTeam],
     ) -> None:
         team_refs = 0
         team_refs_with_images = 0
         for tournament_id in tournament_ids:
             team_map: dict[str, int] = {}
+            for provider_team in teams:
+                team_refs += 1
+                if provider_team.image_url:
+                    team_refs_with_images += 1
+                await self._get_or_create_team(db, tournament_id, provider_team, None, team_map)
             for provider_match in matches:
                 for provider_team in (provider_match.home_team, provider_match.away_team):
                     if provider_team is None:

@@ -65,6 +65,17 @@ def _thesportsdb_events() -> dict:
     }
 
 
+def _thesportsdb_teams() -> dict:
+    return {
+        "teams": [
+            {"idTeam": "201", "strTeam": "Heart of Midlothian", "strTeamShort": "HEA", "strBadge": "/images/media/team/badge/hearts.png"},
+            {"idTeam": "202", "strTeam": "Hibernian", "strTeamShort": "HIB", "strBadge": "https://example.com/hibs.png"},
+            {"idTeam": "203", "strTeam": "Celtic", "strTeamShort": "CEL", "strBadge": "https://example.com/celtic.png"},
+            {"idTeam": "204", "strTeam": "Dundee", "strTeamShort": "DUN", "strBadge": "https://example.com/dundee.png"},
+        ]
+    }
+
+
 async def test_import_football_data_org_provider_normalizes_data(client_user_1: AsyncClient, monkeypatch):
     def fake_get(url, **kwargs):
         assert "api.football-data.org" in url
@@ -99,6 +110,9 @@ async def test_import_thesportsdb_provider_normalizes_scottish_premiership(clien
         if url.endswith("eventsseason.php"):
             assert params == {"id": "4330", "s": "2026-2027"}
             return FakeResponse(_thesportsdb_events())
+        if url.endswith("lookup_all_teams.php"):
+            assert params == {"id": "4330"}
+            return FakeResponse(_thesportsdb_teams())
         if url.endswith("lookupteam.php") and params == {"id": "201"}:
             return FakeResponse({"teams": [{"idTeam": "201", "strTeam": "Heart of Midlothian", "strTeamShort": "HEA", "strBadge": "/images/media/team/badge/hearts.png"}]})
         if url.endswith("lookupteam.php") and params == {"id": "202"}:
@@ -120,10 +134,12 @@ async def test_import_thesportsdb_provider_normalizes_scottish_premiership(clien
     assert tournament["external_id"] == "4330"
 
     teams = (await client_user_1.get(f"/team?tournament_id={tournament['id']}")).json()
-    assert {team["name"] for team in teams} == {"Heart of Midlothian", "Hibernian"}
-    assert {team["external_id"] for team in teams} == {"201", "202"}
+    assert {team["name"] for team in teams} == {"Heart of Midlothian", "Hibernian", "Celtic", "Dundee"}
+    assert {team["external_id"] for team in teams} == {"201", "202", "203", "204"}
     assert any(team["image_url"] == "https://www.thesportsdb.com/images/media/team/badge/hearts.png" for team in teams)
     assert any(team["image_url"] == "https://example.com/hibs.png" for team in teams)
+    assert any(team["image_url"] == "https://example.com/celtic.png" for team in teams)
+    assert any(team["image_url"] == "https://example.com/dundee.png" for team in teams)
 
     matches = (await client_user_1.get(f"/match?tournament_id={tournament['id']}")).json()
     assert len(matches) == 1

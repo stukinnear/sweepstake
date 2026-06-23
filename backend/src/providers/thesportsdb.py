@@ -43,6 +43,34 @@ class TheSportsDBProvider(FootballProvider):
         await self._fill_missing_teams_from_names(events, teams)
         return data, [self._normalize_match(event, teams) for event in events if event.get("idEvent")]
 
+    async def fetch_teams(self, competition_id: str) -> list[ProviderTeam]:
+        data = await self._get_json("lookup_all_teams.php", {"id": competition_id})
+        teams = data.get("teams") or []
+        if not teams:
+            teams = await self._search_league_teams()
+        provider_teams = [
+            self._normalize_team_record(team)
+            for team in teams
+            if team.get("idTeam") and team.get("strTeam")
+        ]
+        logger.info(
+            "TheSportsDB league teams id=%s teams=%s teams_with_images=%s",
+            competition_id,
+            len(provider_teams),
+            sum(1 for team in provider_teams if team.image_url),
+        )
+        return provider_teams
+
+    async def _search_league_teams(self) -> list[dict]:
+        league_names = ["Scottish Premiership", "Scottish Premier League"]
+        for league_name in league_names:
+            data = await self._get_json("search_all_teams.php", {"l": league_name})
+            teams = data.get("teams") or []
+            if teams:
+                logger.info("TheSportsDB search_all_teams league=%r teams=%s", league_name, len(teams))
+                return teams
+        return []
+
     async def _fetch_teams(self, team_ids: set[str]) -> dict[str, dict]:
         teams: dict[str, dict] = {}
         for team_id in team_ids:
@@ -140,10 +168,20 @@ class TheSportsDBProvider(FootballProvider):
             ),
         )
 
+    def _normalize_team_record(self, team: dict) -> ProviderTeam:
+        return ProviderTeam(
+            external_id=str(team["idTeam"]),
+            name=team["strTeam"],
+            iso_code=team.get("strTeamShort"),
+            image_url=self._image_url(self._team_image(team)),
+        )
+
     def _team_image(self, team: dict) -> str | None:
         return (
             team.get("strBadge")
+            or team.get("strTeamBadge")
             or team.get("strLogo")
+            or team.get("strTeamLogo")
         )
 
     def _image_url(self, value: str | None) -> str | None:
