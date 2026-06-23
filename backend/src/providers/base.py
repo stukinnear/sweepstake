@@ -103,8 +103,9 @@ class FootballProvider(ABC):
             and (match.status != "FINISHED" or match.start_datetime >= cutoff)
         ]
 
+        hash_unchanged = hash_file.is_file() and hash_file.read_text().strip() == data_hash
         await self._refresh_team_metadata(db, tournament_ids, matches)
-        if hash_file.is_file() and hash_file.read_text().strip() == data_hash:
+        if hash_unchanged and self.provider_id != "thesportsdb":
             await db.commit()
             return
 
@@ -222,15 +223,22 @@ class FootballProvider(ABC):
         result = await db.execute(
             select(team_models.Team)
             .where(team_models.Team.tournament_id == tournament_id)
-            .where(
-                or_(
-                    (team_models.Team.external_provider == self.provider_id)
-                    & (team_models.Team.external_id == provider_team.external_id),
-                    self._legacy_team_filter(provider_team.external_id),
-                )
-            )
+            .where(team_models.Team.name == provider_team.name)
         )
         team = result.scalars().first()
+        if team is None:
+            result = await db.execute(
+                select(team_models.Team)
+                .where(team_models.Team.tournament_id == tournament_id)
+                .where(
+                    or_(
+                        (team_models.Team.external_provider == self.provider_id)
+                        & (team_models.Team.external_id == provider_team.external_id),
+                        self._legacy_team_filter(provider_team.external_id),
+                    )
+                )
+            )
+            team = result.scalars().first()
         if team is None:
             team = team_models.Team(
                 external_provider=self.provider_id,
