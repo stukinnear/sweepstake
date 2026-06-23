@@ -124,10 +124,12 @@ function TeamSelector({
 export function MatchModal({
   tournamentId,
   match,
+  showStage = true,
   onClose,
 }: {
   tournamentId: number
   match?: Match
+  showStage?: boolean
   onClose: () => void
 }) {
   const { data: teams = [] } = useListTeamsQuery(tournamentId)
@@ -164,7 +166,7 @@ export function MatchModal({
             start_datetime: fromDatetimeLocal(datetime),
             home_team_id: homeTeamId ? Number(homeTeamId) : undefined,
             away_team_id: awayTeamId ? Number(awayTeamId) : undefined,
-            stage_id: stageId ? Number(stageId) : undefined,
+            stage_id: showStage && stageId ? Number(stageId) : undefined,
             home_goals: homeGoals !== '' ? Number(homeGoals) : null,
             away_goals: awayGoals !== '' ? Number(awayGoals) : null,
             tv_channel: tvChannel || null,
@@ -176,7 +178,7 @@ export function MatchModal({
           start_datetime: fromDatetimeLocal(datetime),
           home_team_id: homeTeamId ? Number(homeTeamId) : undefined,
           away_team_id: awayTeamId ? Number(awayTeamId) : undefined,
-          stage_id: stageId ? Number(stageId) : undefined,
+          stage_id: showStage && stageId ? Number(stageId) : undefined,
           home_goals: homeGoals !== '' ? Number(homeGoals) : undefined,
           away_goals: awayGoals !== '' ? Number(awayGoals) : undefined,
           tv_channel: tvChannel || undefined,
@@ -263,6 +265,7 @@ export function MatchModal({
               disabled={isLoading}
             />
           </div>
+          {showStage && (
           <div>
             <div className="flex items-center justify-between mb-1">
               <label className="text-xs font-medium text-gray-600 dark:text-gray-400">Stage</label>
@@ -290,7 +293,8 @@ export function MatchModal({
               ))}
             </select>
           </div>
-          {showStageManager && (
+          )}
+          {showStage && showStageManager && (
             <StageManagerModal
               tournamentId={tournamentId}
               onClose={() => setShowStageManager(false)}

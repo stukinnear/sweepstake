@@ -151,7 +151,7 @@ class TheSportsDBProvider(FootballProvider):
             away_team=self._normalize_team(event, teams.get(away_team_id), "Away"),
             home_goals=self._int_or_none(event.get("intHomeScore")),
             away_goals=self._int_or_none(event.get("intAwayScore")),
-            stage_name=event.get("strRound") or event.get("intRound"),
+            stage_name=None,
         )
 
     def _normalize_team(self, event: dict, team: dict | None, side: str) -> ProviderTeam | None:

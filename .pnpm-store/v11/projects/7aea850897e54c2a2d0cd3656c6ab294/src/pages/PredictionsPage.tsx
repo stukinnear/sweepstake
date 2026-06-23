@@ -519,13 +519,16 @@ export function PredictionsPage() {
   const visibleMatches = restrictToPublished
     ? allMatches.filter((m) => parseServerDt(m.start_datetime).getTime() <= nowMs)
     : allMatches
-  const grouped = groupByStage(visibleMatches)
+  const showStageGrouping = tournament.external_provider !== 'thesportsdb'
+  const grouped = showStageGrouping
+    ? groupByStage(visibleMatches)
+    : new Map(visibleMatches.length ? [['Matches', visibleMatches]] : [])
 
   // Sections visible to non-admin viewers (only if already started)
   const showTournamentSection =
     !!(tournament.first_place_points || tournament.second_place_points || tournament.third_place_points) &&
     (!restrictToPublished || (tournament.start_date != null && tournament.start_date <= today))
-  const showGroupStagePredictions = tournament.external_provider !== 'thesportsdb'
+  const showGroupStagePredictions = showStageGrouping
 
   const visibleGroups = (restrictToPublished
     ? groups.filter((g) => g.start_date != null && g.start_date <= today)
@@ -746,9 +749,11 @@ export function PredictionsPage() {
 
             {(() => { let nowLineInserted = false; const renderNowMs = Date.now(); return Array.from(grouped.entries()).map(([stage, stageMatches]) => (
               <div key={stage} className="mb-6">
-                <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">
-                  {stage}
-                </h3>
+                {showStageGrouping && (
+                  <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">
+                    {stage}
+                  </h3>
+                )}
                 <ul className="grid grid-cols-1 md:grid-cols-[auto_1fr_auto_1fr_auto] gap-x-2 gap-y-2">
                   {stageMatches.map((match) => {
                     const matchStartMs = parseServerDt(match.start_datetime).getTime()

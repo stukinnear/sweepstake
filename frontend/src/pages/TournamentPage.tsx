@@ -136,6 +136,7 @@ export function TournamentPage() {
   ) : undefined
 
   const showGroupStageRules = tournament.external_provider !== 'thesportsdb'
+  const showStageManagement = tournament.external_provider !== 'thesportsdb'
   const teamById = new Map(teams.map((team) => [team.id, team]))
   const imageForTeam = (team: Match['home_team']) =>
     team?.image_url ?? (team?.id ? teamById.get(team.id)?.image_url : null)
@@ -162,7 +163,9 @@ export function TournamentPage() {
   const visibleMatches = showAllPast
     ? filteredMatches
     : filteredMatches.filter((m) => new Date(m.start_datetime) >= cutoff)
-  const grouped = groupByStage(visibleMatches)
+  const grouped = showStageManagement
+    ? groupByStage(visibleMatches)
+    : new Map(visibleMatches.length ? [['Matches', visibleMatches]] : [])
 
   return (
     <PageShell>
@@ -170,12 +173,12 @@ export function TournamentPage() {
         <EditTournamentModal tournament={tournament} onClose={() => setShowEditTournament(false)} />
       )}
       {editingMatch != null && (
-        <MatchModal tournamentId={tournamentId} match={editingMatch} onClose={() => setEditingMatch(null)} />
+        <MatchModal tournamentId={tournamentId} match={editingMatch} showStage={showStageManagement} onClose={() => setEditingMatch(null)} />
       )}
       {showAddMatch && (
-        <MatchModal tournamentId={tournamentId} onClose={() => setShowAddMatch(false)} />
+        <MatchModal tournamentId={tournamentId} showStage={showStageManagement} onClose={() => setShowAddMatch(false)} />
       )}
-      {showStageManager && (
+      {showStageManagement && showStageManager && (
         <StageManagerModal tournamentId={tournamentId} onClose={() => setShowStageManager(false)} />
       )}
       {showTeamPicker && (
@@ -249,7 +252,7 @@ export function TournamentPage() {
                   Teams
                 </button>
               )}
-              {isAdmin && (
+              {isAdmin && showStageManagement && (
                 <button
                   onClick={() => setShowStageManager(true)}
                   className="inline-flex items-center gap-1 rounded-full border border-gray-300 dark:border-gray-600 px-2.5 py-1 text-xs font-medium text-gray-600 dark:text-gray-400 hover:border-blue-400 hover:text-blue-500 dark:hover:text-blue-400 transition"
@@ -342,9 +345,11 @@ export function TournamentPage() {
 
           {(() => { let nowLineInserted = false; const nowMs = Date.now(); return Array.from(grouped.entries()).map(([stage, stageMatches]) => (
             <div key={stage} className="mb-6">
-              <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">
-                {stage}
-              </h3>
+              {showStageManagement && (
+                <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">
+                  {stage}
+                </h3>
+              )}
               <ul className="space-y-2">
                 {stageMatches.map((match) => {
                   const homeGoals = match.home_goals

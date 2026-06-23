@@ -147,4 +147,4 @@ async def test_import_thesportsdb_provider_normalizes_scottish_premiership(clien
     assert matches[0]["external_id"] == "9001"
     assert matches[0]["home_goals"] == 3
     assert matches[0]["away_goals"] == 2
-    assert matches[0]["stage_name"] == "1"
+    assert matches[0]["stage_name"] is None
