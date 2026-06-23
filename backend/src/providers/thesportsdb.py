@@ -11,6 +11,21 @@ from src.providers.models import ProviderCompetition, ProviderMatch, ProviderTea
 
 logger = get_logger(__name__)
 
+SCOTTISH_PREMIERSHIP_TEAM_NAMES = [
+    "Aberdeen",
+    "Celtic",
+    "Dundee",
+    "Dundee United",
+    "Falkirk",
+    "Heart of Midlothian",
+    "Hibernian",
+    "Kilmarnock",
+    "Motherwell",
+    "Rangers",
+    "St Johnstone",
+    "St Mirren",
+]
+
 
 class TheSportsDBProvider(FootballProvider):
     provider_id = "thesportsdb"
@@ -48,6 +63,8 @@ class TheSportsDBProvider(FootballProvider):
         teams = data.get("teams") or []
         if not teams:
             teams = await self._search_league_teams()
+        if str(competition_id) == "4330":
+            teams = await self._ensure_scottish_premiership_teams(teams)
         provider_teams = [
             self._normalize_team_record(team)
             for team in teams
@@ -70,6 +87,27 @@ class TheSportsDBProvider(FootballProvider):
                 logger.info("TheSportsDB search_all_teams league=%r teams=%s", league_name, len(teams))
                 return teams
         return []
+
+    async def _ensure_scottish_premiership_teams(self, teams: list[dict]) -> list[dict]:
+        teams_by_name = {
+            (team.get("strTeam") or "").casefold(): team
+            for team in teams
+            if team.get("strTeam")
+        }
+        for team_name in SCOTTISH_PREMIERSHIP_TEAM_NAMES:
+            if team_name.casefold() in teams_by_name:
+                continue
+            team = await self._search_team(team_name)
+            if team and team.get("strTeam"):
+                teams_by_name[team["strTeam"].casefold()] = team
+                logger.info(
+                    "TheSportsDB added missing Scottish Premiership team name=%r matched=%r badge=%s logo=%s",
+                    team_name,
+                    team.get("strTeam"),
+                    bool(team.get("strBadge")),
+                    bool(team.get("strLogo")),
+                )
+        return list(teams_by_name.values())
 
     async def _fetch_teams(self, team_ids: set[str]) -> dict[str, dict]:
         teams: dict[str, dict] = {}

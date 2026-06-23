@@ -68,10 +68,16 @@ def _thesportsdb_events() -> dict:
 def _thesportsdb_teams() -> dict:
     return {
         "teams": [
+            {"idTeam": "205", "strTeam": "Aberdeen", "strTeamShort": "ABE", "strBadge": "https://example.com/aberdeen.png"},
             {"idTeam": "201", "strTeam": "Heart of Midlothian", "strTeamShort": "HEA", "strBadge": "/images/media/team/badge/hearts.png"},
             {"idTeam": "202", "strTeam": "Hibernian", "strTeamShort": "HIB", "strBadge": "https://example.com/hibs.png"},
-            {"idTeam": "203", "strTeam": "Celtic", "strTeamShort": "CEL", "strBadge": "https://example.com/celtic.png"},
-            {"idTeam": "204", "strTeam": "Dundee", "strTeamShort": "DUN", "strBadge": "https://example.com/dundee.png"},
+            {"idTeam": "206", "strTeam": "Dundee United", "strTeamShort": "DUN", "strBadge": "https://example.com/dundee-united.png"},
+            {"idTeam": "207", "strTeam": "Falkirk", "strTeamShort": "FAL", "strBadge": "https://example.com/falkirk.png"},
+            {"idTeam": "208", "strTeam": "Kilmarnock", "strTeamShort": "KIL", "strBadge": "https://example.com/kilmarnock.png"},
+            {"idTeam": "209", "strTeam": "Motherwell", "strTeamShort": "MOT", "strBadge": "https://example.com/motherwell.png"},
+            {"idTeam": "210", "strTeam": "Rangers", "strTeamShort": "RAN", "strBadge": "https://example.com/rangers.png"},
+            {"idTeam": "211", "strTeam": "St Johnstone", "strTeamShort": "STJ", "strBadge": "https://example.com/st-johnstone.png"},
+            {"idTeam": "212", "strTeam": "St Mirren", "strTeamShort": "STM", "strBadge": "https://example.com/st-mirren.png"},
         ]
     }
 
@@ -119,6 +125,10 @@ async def test_import_thesportsdb_provider_normalizes_scottish_premiership(clien
             return FakeResponse({"teams": [{"idTeam": "202", "strTeam": "Hibernian", "strTeamShort": "HIB", "strBadge": None}]})
         if url.endswith("searchteams.php") and params == {"t": "Hibs"}:
             return FakeResponse({"teams": [{"idTeam": "202", "strTeam": "Hibernian", "strTeamShort": "HIB", "strBadge": "https://example.com/hibs.png"}]})
+        if url.endswith("searchteams.php") and params == {"t": "Celtic"}:
+            return FakeResponse({"teams": [{"idTeam": "203", "strTeam": "Celtic", "strTeamShort": "CEL", "strBadge": "https://example.com/celtic.png"}]})
+        if url.endswith("searchteams.php") and params == {"t": "Dundee"}:
+            return FakeResponse({"teams": [{"idTeam": "204", "strTeam": "Dundee", "strTeamShort": "DUN", "strBadge": "https://example.com/dundee.png"}]})
         raise AssertionError(f"Unexpected URL {url} params={params}")
 
     monkeypatch.setattr("src.providers.thesportsdb.requests.get", fake_get)
@@ -134,8 +144,9 @@ async def test_import_thesportsdb_provider_normalizes_scottish_premiership(clien
     assert tournament["external_id"] == "4330"
 
     teams = (await client_user_1.get(f"/team?tournament_id={tournament['id']}")).json()
-    assert {team["name"] for team in teams} == {"Heart of Midlothian", "Hibernian", "Celtic", "Dundee"}
-    assert {team["external_id"] for team in teams} == {"201", "202", "203", "204"}
+    assert len(teams) == 12
+    assert {"Celtic", "Dundee"}.issubset({team["name"] for team in teams})
+    assert {"203", "204"}.issubset({team["external_id"] for team in teams})
     assert any(team["image_url"] == "https://www.thesportsdb.com/images/media/team/badge/hearts.png" for team in teams)
     assert any(team["image_url"] == "https://example.com/hibs.png" for team in teams)
     assert any(team["image_url"] == "https://example.com/celtic.png" for team in teams)
