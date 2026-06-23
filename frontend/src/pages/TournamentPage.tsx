@@ -3,6 +3,7 @@ import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Pencil, Plus, Search } from 'lucide-react'
 import { useGetTournamentQuery } from '../api/tournamentApi'
 import { useListMatchesQuery } from '../api/matchApi'
+import { useListTeamsQuery } from '../api/teamApi'
 import { useListGroupsQuery } from '../api/groupApi'
 import { useGetMeQuery } from '../api/authApi'
 import { PageShell } from '../components/PageShell'
@@ -52,6 +53,7 @@ export function TournamentPage() {
   const tournamentId = Number(id)
   const { data: tournament, isLoading: tLoading, error: tError } = useGetTournamentQuery(tournamentId)
   const { data: matches, isLoading: mLoading, error: mError } = useListMatchesQuery(tournamentId)
+  const { data: teams = [] } = useListTeamsQuery(tournamentId)
   const { data: groups = [] } = useListGroupsQuery(tournamentId)
   const [searchParams, setSearchParams] = useSearchParams()
   const [showAllPast, setShowAllPast] = useState(false)
@@ -134,6 +136,9 @@ export function TournamentPage() {
   ) : undefined
 
   const showGroupStageRules = tournament.external_provider !== 'thesportsdb'
+  const teamById = new Map(teams.map((team) => [team.id, team]))
+  const imageForTeam = (team: Match['home_team']) =>
+    team?.image_url ?? (team?.id ? teamById.get(team.id)?.image_url : null)
   const rules: { label: string; points: number | null }[] = [
     { label: '🥇 Correct tournament winner', points: tournament.first_place_points },
     { label: '🥈 Correct runner-up', points: tournament.second_place_points },
@@ -410,7 +415,7 @@ export function TournamentPage() {
                         <span className="text-sm text-right text-gray-900 dark:text-gray-100 truncate">
                           {match.home_team?.name ?? '—'}
                         </span>
-                        <TeamBadge name={match.home_team?.name} imageUrl={match.home_team?.image_url} />
+                        <TeamBadge name={match.home_team?.name} imageUrl={imageForTeam(match.home_team)} />
                       </div>
 
                       {/* Score — row 2 center on mobile, col 3 on desktop */}
@@ -428,7 +433,7 @@ export function TournamentPage() {
                             : 'hover:bg-gray-100 dark:hover:bg-gray-700',
                         ].join(' ')}
                       >
-                        <TeamBadge name={match.away_team?.name} imageUrl={match.away_team?.image_url} />
+                        <TeamBadge name={match.away_team?.name} imageUrl={imageForTeam(match.away_team)} />
                         <span className="text-sm text-left text-gray-900 dark:text-gray-100 truncate">
                           {match.away_team?.name ?? '—'}
                         </span>

@@ -97,6 +97,25 @@ export const tournamentApi = baseApi.injectEndpoints({
 
     sendAdminAction: build.mutation<void, { id: number; action: TournamentAdminAction }>({
       query: ({ id, action }) => ({ url: `/tournament/${id}/action`, method: 'POST', body: { action } }),
+      invalidatesTags: (_result, _error, { id, action }) =>
+        action === 'update-tournament'
+          ? [
+              { type: 'Tournament' as const, id },
+              { type: 'Team' as const, id: 'LIST' },
+              { type: 'Match' as const, id: 'LIST' },
+            ]
+          : [],
+      async onQueryStarted({ id, action }, { dispatch, queryFulfilled }) {
+        await queryFulfilled
+        if (action !== 'update-tournament') return
+        const tags = [
+          { type: 'Tournament' as const, id },
+          { type: 'Team' as const, id: 'LIST' },
+          { type: 'Match' as const, id: 'LIST' },
+        ]
+        window.setTimeout(() => dispatch(tournamentApi.util.invalidateTags(tags)), 3_000)
+        window.setTimeout(() => dispatch(tournamentApi.util.invalidateTags(tags)), 8_000)
+      },
     }),
   }),
 })

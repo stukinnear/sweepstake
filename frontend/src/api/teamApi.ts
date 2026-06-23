@@ -5,7 +5,10 @@ export const teamApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
     listTeams: build.query<Team[], number>({
       query: (tournamentId) => `/team?tournament_id=${tournamentId}`,
-      providesTags: (result) => result ? [...result.map(({ id }) => ({ type: 'Team' as const, id }))] : [{ type: 'Team', id: 'undefined' }],
+      providesTags: (result) =>
+        result
+          ? [...result.map(({ id }) => ({ type: 'Team' as const, id })), { type: 'Team' as const, id: 'LIST' }]
+          : [{ type: 'Team' as const, id: 'LIST' }],
     }),
 
     getTeam: build.query<Team, number>({

@@ -170,6 +170,19 @@ class FootballProvider(ABC):
             team_refs,
             team_refs_with_images,
         )
+        if tournament_ids:
+            result = await db.execute(
+                select(team_models.Team.image_url)
+                .where(team_models.Team.tournament_id.in_(tournament_ids))
+                .where(team_models.Team.external_provider == self.provider_id)
+            )
+            team_image_values = result.scalars().all()
+            logger.info(
+                "%s team image rows after refresh: teams=%s teams_with_images=%s",
+                self.provider_id,
+                len(team_image_values),
+                sum(1 for image_url in team_image_values if image_url),
+            )
 
     async def _get_or_create_group(
         self,
