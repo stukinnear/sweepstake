@@ -40,6 +40,7 @@ class TheSportsDBProvider(FootballProvider):
         team_ids = {event.get("idHomeTeam") for event in events if event.get("idHomeTeam")}
         team_ids.update(event.get("idAwayTeam") for event in events if event.get("idAwayTeam"))
         teams = await self._fetch_teams(team_ids)
+        await self._fill_missing_teams_from_names(events, teams)
         return data, [self._normalize_match(event, teams) for event in events if event.get("idEvent")]
 
     async def _fetch_teams(self, team_ids: set[str]) -> dict[str, dict]:
@@ -64,6 +65,47 @@ class TheSportsDBProvider(FootballProvider):
             )
         return teams
 
+    async def _fill_missing_teams_from_names(self, events: list[dict], teams: dict[str, dict]) -> None:
+        for event in events:
+            for side in ("Home", "Away"):
+                team_id = event.get(f"id{side}Team")
+                team_name = event.get(f"str{side}Team")
+                existing_team = teams.get(team_id) if team_id else None
+                if not team_name or (existing_team and self._team_image(existing_team)):
+                    continue
+                team = await self._search_team(team_name)
+                if not team:
+                    logger.info("TheSportsDB searchteams name=%r found no team", team_name)
+                    continue
+                cache_key = str(team_id or team.get("idTeam") or team_name)
+                teams[cache_key] = team
+                if team_id:
+                    teams[team_id] = team
+                logger.info(
+                    "TheSportsDB searchteams name=%r matched=%r badge=%s logo=%s",
+                    team_name,
+                    team.get("strTeam"),
+                    bool(team.get("strBadge")),
+                    bool(team.get("strLogo")),
+                )
+
+    async def _search_team(self, team_name: str) -> dict | None:
+        cache_key = f"name:{team_name.lower()}"
+        if cache_key in self._team_cache:
+            return self._team_cache[cache_key]
+        data = await self._get_json("searchteams.php", {"t": team_name})
+        teams = data.get("teams") or []
+        exact_team = next(
+            (
+                team for team in teams
+                if (team.get("strTeam") or "").casefold() == team_name.casefold()
+            ),
+            None,
+        )
+        team = exact_team or (teams[0] if teams else None)
+        self._team_cache[cache_key] = team
+        return team
+
     async def _get_json(self, endpoint: str, params: dict[str, str]) -> dict:
         url = f"https://www.thesportsdb.com/api/v1/json/{settings.thesportsdb_api_key}/{endpoint}"
         response = await asyncio.to_thread(requests.get, url, params=params, timeout=30)
@@ -85,12 +127,13 @@ class TheSportsDBProvider(FootballProvider):
         )
 
     def _normalize_team(self, event: dict, team: dict | None, side: str) -> ProviderTeam | None:
-        team_id = event.get(f"id{side}Team")
-        if not team_id:
+        team_id = event.get(f"id{side}Team") or (team or {}).get("idTeam")
+        team_name = (team or {}).get("strTeam") or event.get(f"str{side}Team")
+        if not team_id and not team_name:
             return None
         return ProviderTeam(
-            external_id=str(team_id),
-            name=(team or {}).get("strTeam") or event.get(f"str{side}Team") or "TBD",
+            external_id=str(team_id or team_name),
+            name=team_name or "TBD",
             iso_code=(team or {}).get("strTeamShort"),
             image_url=self._image_url(
                 self._team_image(team or {})

@@ -149,11 +149,26 @@ class FootballProvider(ABC):
         tournament_ids: list[int],
         matches: list[ProviderMatch],
     ) -> None:
+        team_refs = 0
+        team_refs_with_images = 0
         for tournament_id in tournament_ids:
             team_map: dict[str, int] = {}
             for provider_match in matches:
+                for provider_team in (provider_match.home_team, provider_match.away_team):
+                    if provider_team is None:
+                        continue
+                    team_refs += 1
+                    if provider_team.image_url:
+                        team_refs_with_images += 1
                 await self._get_or_create_team(db, tournament_id, provider_match.home_team, None, team_map)
                 await self._get_or_create_team(db, tournament_id, provider_match.away_team, None, team_map)
+        logger.info(
+            "%s team metadata refresh: tournaments=%s team_refs=%s team_refs_with_images=%s",
+            self.provider_id,
+            len(tournament_ids),
+            team_refs,
+            team_refs_with_images,
+        )
 
     async def _get_or_create_group(
         self,
@@ -233,13 +248,28 @@ class FootballProvider(ABC):
             )
             db.add(team)
             await db.flush()
+            if provider_team.image_url:
+                logger.info(
+                    "Created %s team image tournament_id=%s external_id=%s name=%r",
+                    self.provider_id,
+                    tournament_id,
+                    provider_team.external_id,
+                    provider_team.name,
+                )
         else:
             team.external_provider = self.provider_id
             team.external_id = provider_team.external_id
             team.name = provider_team.name
             team.iso_code = provider_team.iso_code
-            if provider_team.image_url:
+            if provider_team.image_url and team.image_url != provider_team.image_url:
                 team.image_url = provider_team.image_url
+                logger.info(
+                    "Updated %s team image tournament_id=%s external_id=%s name=%r",
+                    self.provider_id,
+                    tournament_id,
+                    provider_team.external_id,
+                    provider_team.name,
+                )
             if group_id is not None:
                 team.group_id = group_id
         team_id_map[key] = team.id

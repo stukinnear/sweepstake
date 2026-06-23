@@ -102,6 +102,8 @@ async def test_import_thesportsdb_provider_normalizes_scottish_premiership(clien
         if url.endswith("lookupteam.php") and params == {"id": "201"}:
             return FakeResponse({"teams": [{"idTeam": "201", "strTeam": "Heart of Midlothian", "strTeamShort": "HEA", "strBadge": "/images/media/team/badge/hearts.png"}]})
         if url.endswith("lookupteam.php") and params == {"id": "202"}:
+            return FakeResponse({"teams": [{"idTeam": "202", "strTeam": "Hibernian", "strTeamShort": "HIB", "strBadge": None}]})
+        if url.endswith("searchteams.php") and params == {"t": "Hibs"}:
             return FakeResponse({"teams": [{"idTeam": "202", "strTeam": "Hibernian", "strTeamShort": "HIB", "strBadge": "https://example.com/hibs.png"}]})
         raise AssertionError(f"Unexpected URL {url} params={params}")
 
@@ -121,6 +123,7 @@ async def test_import_thesportsdb_provider_normalizes_scottish_premiership(clien
     assert {team["name"] for team in teams} == {"Heart of Midlothian", "Hibernian"}
     assert {team["external_id"] for team in teams} == {"201", "202"}
     assert any(team["image_url"] == "https://www.thesportsdb.com/images/media/team/badge/hearts.png" for team in teams)
+    assert any(team["image_url"] == "https://example.com/hibs.png" for team in teams)
 
     matches = (await client_user_1.get(f"/match?tournament_id={tournament['id']}")).json()
     assert len(matches) == 1
