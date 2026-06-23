@@ -40,6 +40,9 @@ class FootballProvider(ABC):
     async def fetch_teams(self, competition_id: str) -> list[ProviderTeam]:
         return []
 
+    def expected_team_names(self, competition_id: str) -> set[str] | None:
+        return None
+
     async def import_competition(
         self,
         db: AsyncSession,
@@ -112,7 +115,7 @@ class FootballProvider(ABC):
         ]
 
         hash_unchanged = hash_file.is_file() and hash_file.read_text().strip() == data_hash
-        await self._refresh_team_metadata(db, tournament_ids, matches, provider_teams)
+        await self._refresh_team_metadata(db, tournament_ids, matches, provider_teams, competition_id)
         if hash_unchanged and self.provider_id != "thesportsdb":
             await db.commit()
             return
@@ -158,6 +161,7 @@ class FootballProvider(ABC):
         tournament_ids: list[int],
         matches: list[ProviderMatch],
         teams: list[ProviderTeam],
+        competition_id: str,
     ) -> None:
         team_refs = 0
         team_refs_with_images = 0
@@ -177,6 +181,7 @@ class FootballProvider(ABC):
                         team_refs_with_images += 1
                 await self._get_or_create_team(db, tournament_id, provider_match.home_team, None, team_map)
                 await self._get_or_create_team(db, tournament_id, provider_match.away_team, None, team_map)
+            await self._prune_unexpected_teams(db, tournament_id, self.expected_team_names(competition_id))
         logger.info(
             "%s team metadata refresh: tournaments=%s team_refs=%s team_refs_with_images=%s",
             self.provider_id,
@@ -197,6 +202,33 @@ class FootballProvider(ABC):
                 len(team_image_values),
                 sum(1 for image_url in team_image_values if image_url),
             )
+
+    async def _prune_unexpected_teams(
+        self,
+        db: AsyncSession,
+        tournament_id: int,
+        expected_names: set[str] | None,
+    ) -> None:
+        if not expected_names:
+            return
+        result = await db.execute(
+            select(team_models.Team)
+            .where(team_models.Team.tournament_id == tournament_id)
+            .where(team_models.Team.external_provider == self.provider_id)
+        )
+        unexpected_teams = [
+            team for team in result.scalars().all()
+            if team.name.casefold() not in expected_names
+        ]
+        for team in unexpected_teams:
+            logger.info(
+                "Removing unexpected %s team tournament_id=%s external_id=%s name=%r",
+                self.provider_id,
+                tournament_id,
+                team.external_id,
+                team.name,
+            )
+            await db.delete(team)
 
     async def _get_or_create_group(
         self,

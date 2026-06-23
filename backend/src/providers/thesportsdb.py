@@ -25,6 +25,9 @@ SCOTTISH_PREMIERSHIP_TEAM_NAMES = [
     "St Johnstone",
     "St Mirren",
 ]
+SCOTTISH_PREMIERSHIP_TEAM_NAME_SET = {
+    team_name.casefold() for team_name in SCOTTISH_PREMIERSHIP_TEAM_NAMES
+}
 
 
 class TheSportsDBProvider(FootballProvider):
@@ -78,6 +81,11 @@ class TheSportsDBProvider(FootballProvider):
         )
         return provider_teams
 
+    def expected_team_names(self, competition_id: str) -> set[str] | None:
+        if str(competition_id) == "4330":
+            return SCOTTISH_PREMIERSHIP_TEAM_NAME_SET
+        return None
+
     async def _search_league_teams(self) -> list[dict]:
         league_names = ["Scottish Premiership", "Scottish Premier League"]
         for league_name in league_names:
@@ -92,12 +100,12 @@ class TheSportsDBProvider(FootballProvider):
         teams_by_name = {
             (team.get("strTeam") or "").casefold(): team
             for team in teams
-            if team.get("strTeam")
+            if (team.get("strTeam") or "").casefold() in SCOTTISH_PREMIERSHIP_TEAM_NAME_SET
         }
         for team_name in SCOTTISH_PREMIERSHIP_TEAM_NAMES:
             if team_name.casefold() in teams_by_name:
                 continue
-            team = await self._search_team(team_name)
+            team = await self._search_team(team_name, require_exact=True)
             if team and team.get("strTeam"):
                 teams_by_name[team["strTeam"].casefold()] = team
                 logger.info(
@@ -155,8 +163,8 @@ class TheSportsDBProvider(FootballProvider):
                     bool(team.get("strLogo")),
                 )
 
-    async def _search_team(self, team_name: str) -> dict | None:
-        cache_key = f"name:{team_name.lower()}"
+    async def _search_team(self, team_name: str, require_exact: bool = False) -> dict | None:
+        cache_key = f"name:{team_name.lower()}:{require_exact}"
         if cache_key in self._team_cache:
             return self._team_cache[cache_key]
         data = await self._get_json("searchteams.php", {"t": team_name})
@@ -168,7 +176,7 @@ class TheSportsDBProvider(FootballProvider):
             ),
             None,
         )
-        team = exact_team or (teams[0] if teams else None)
+        team = exact_team or (None if require_exact else (teams[0] if teams else None))
         self._team_cache[cache_key] = team
         return team
 

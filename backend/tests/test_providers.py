@@ -73,7 +73,9 @@ def _thesportsdb_teams() -> dict:
             {"idTeam": "202", "strTeam": "Hibernian", "strTeamShort": "HIB", "strBadge": "https://example.com/hibs.png"},
             {"idTeam": "206", "strTeam": "Dundee United", "strTeamShort": "DUN", "strBadge": "https://example.com/dundee-united.png"},
             {"idTeam": "207", "strTeam": "Falkirk", "strTeamShort": "FAL", "strBadge": "https://example.com/falkirk.png"},
+            {"idTeam": "9901", "strTeam": "AFC Wimbledon", "strTeamShort": "WIM", "strBadge": "https://example.com/wimbledon.png"},
             {"idTeam": "208", "strTeam": "Kilmarnock", "strTeamShort": "KIL", "strBadge": "https://example.com/kilmarnock.png"},
+            {"idTeam": "9902", "strTeam": "Barnsley", "strTeamShort": "BAR", "strBadge": "https://example.com/barnsley.png"},
             {"idTeam": "209", "strTeam": "Motherwell", "strTeamShort": "MOT", "strBadge": "https://example.com/motherwell.png"},
             {"idTeam": "210", "strTeam": "Rangers", "strTeamShort": "RAN", "strBadge": "https://example.com/rangers.png"},
             {"idTeam": "211", "strTeam": "St Johnstone", "strTeamShort": "STJ", "strBadge": "https://example.com/st-johnstone.png"},
@@ -144,8 +146,11 @@ async def test_import_thesportsdb_provider_normalizes_scottish_premiership(clien
     assert tournament["external_id"] == "4330"
 
     teams = (await client_user_1.get(f"/team?tournament_id={tournament['id']}")).json()
+    team_names = {team["name"] for team in teams}
     assert len(teams) == 12
-    assert {"Celtic", "Dundee"}.issubset({team["name"] for team in teams})
+    assert {"Celtic", "Dundee"}.issubset(team_names)
+    assert "AFC Wimbledon" not in team_names
+    assert "Barnsley" not in team_names
     assert {"203", "204"}.issubset({team["external_id"] for team in teams})
     assert any(team["image_url"] == "https://www.thesportsdb.com/images/media/team/badge/hearts.png" for team in teams)
     assert any(team["image_url"] == "https://example.com/hibs.png" for team in teams)
