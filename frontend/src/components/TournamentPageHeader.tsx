@@ -5,7 +5,7 @@ import type { Tournament } from '../types/tournament'
 
 export function StakeText({ text }: { text: string }) {
   const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/g
-  const parts = text.split(urlRegex)
+  const parts = text.replace(/\$/g, '£').split(urlRegex)
   return (
     <span className="whitespace-pre-wrap">
       {parts.map((part, i) => {

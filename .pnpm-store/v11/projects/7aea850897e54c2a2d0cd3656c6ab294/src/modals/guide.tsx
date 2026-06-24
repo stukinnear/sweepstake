@@ -122,7 +122,7 @@ const ADMIN_EXTRA_PAGES: GuidePage[] = [
         />
         <p>
           <ul className="list-disc list-inside space-y-1">
-            <li>Tick the <b>💲 button (green)</b> to confirm that the user paid the stake.</li>
+            <li>Tick the <b>£ button (green)</b> to confirm that the user paid the stake.</li>
             <li>Tick the <b>👑 button (yellow)</b> to promote the user to admin.</li>
             <li>Tick the <b>❌ button (red)</b> to remove the user from the SweepStake competition.</li>
           </ul>

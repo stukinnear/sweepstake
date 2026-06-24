@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { BellRing, CircleDollarSign, Crown, HelpCircle, Loader2, RefreshCw, UserX } from 'lucide-react'
+import { BellRing, Crown, HelpCircle, Loader2, RefreshCw, UserX } from 'lucide-react'
 import {
   useCreateTournamentMutation,
   useUpdateTournamentMutation,
@@ -53,6 +53,14 @@ function providerSelection(value: string): { provider?: string; id?: string } {
   if (!value) return {}
   const [provider, ...rest] = value.split(':')
   return { provider, id: rest.join(':') }
+}
+
+function supportsGroupStage(provider?: string): boolean {
+  return provider !== 'thesportsdb'
+}
+
+function normalizeStakeCurrency(value: string): string {
+  return value.replace(/\$/g, '£')
 }
 
 function PointFields(p: PointState & { disabled?: boolean }) {
@@ -140,6 +148,45 @@ function EditPointAndTeamFields(p: EditPointAndTeamState) {
     />
   )
 
+  if (!p.showGroupStage) {
+    return (
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <FieldLabel>1st place points</FieldLabel>
+          {numInput(p.firstPlacePoints, p.setFirstPlacePoints)}
+        </div>
+        <div>
+          <FieldLabel>1st place winner</FieldLabel>
+          {teamSelect(p.firstPlaceTeamId, p.setFirstPlaceTeamId)}
+        </div>
+        <div>
+          <FieldLabel>2nd place points</FieldLabel>
+          {numInput(p.secondPlacePoints, p.setSecondPlacePoints)}
+        </div>
+        <div>
+          <FieldLabel>2nd place winner</FieldLabel>
+          {teamSelect(p.secondPlaceTeamId, p.setSecondPlaceTeamId)}
+        </div>
+        <div>
+          <FieldLabel>3rd place points</FieldLabel>
+          {numInput(p.thirdPlacePoints, p.setThirdPlacePoints)}
+        </div>
+        <div>
+          <FieldLabel>3rd place winner</FieldLabel>
+          {teamSelect(p.thirdPlaceTeamId, p.setThirdPlaceTeamId)}
+        </div>
+        <div>
+          <FieldLabel>Exact score points</FieldLabel>
+          {numInput(p.matchScorePoints, p.setMatchScorePoints)}
+        </div>
+        <div>
+          <FieldLabel>Match winner points</FieldLabel>
+          {numInput(p.matchWinnerPoints, p.setMatchWinnerPoints)}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="grid grid-cols-2 gap-3">
       <div>
@@ -168,11 +215,11 @@ function EditPointAndTeamFields(p: EditPointAndTeamState) {
       </div>
       <div>
         <FieldLabel>🏆 Stage winner points</FieldLabel>
-        {numInput(p.stageWinnerPoints, p.setStageWinnerPoints)}
+        {p.showGroupStage && numInput(p.stageWinnerPoints, p.setStageWinnerPoints)}
       </div>
       <div>
         <FieldLabel>👥 Group winner points</FieldLabel>
-        {numInput(p.groupWinnerPoints, p.setGroupWinnerPoints)}
+        {p.showGroupStage && numInput(p.groupWinnerPoints, p.setGroupWinnerPoints)}
       </div>
       <div>
         <FieldLabel>🎯 Exact score points</FieldLabel>
@@ -299,7 +346,7 @@ export function CreateTournamentModal({ onClose }: { onClose: () => void }) {
   const [createTournament, { isLoading }] = useCreateTournamentMutation()
 
   const [name, setName] = useState('')
-  const [stake, setStake] = useState("Please contribute a €5 stake to the pot. The SweepStake winner receives 50% of the pot, with the remaining 50% donated to a charity of the winner's choosing.\nwww.PayPal.com/{your_name/5\n[Remove this text entirely if there is no stake.]")
+  const [stake, setStake] = useState("Please contribute a £5 stake to the pot. The SweepStake winner receives 50% of the pot, with the remaining 50% donated to a charity of the winner's choosing.\nwww.PayPal.com/{your_name/5\n[Remove this text entirely if there is no stake.]")
   const [externalId, setExternalId] = useState('')
   const [firstPlacePoints, setFirstPlacePoints] = useState('25')
   const [secondPlacePoints, setSecondPlacePoints] = useState('15')
@@ -310,7 +357,7 @@ export function CreateTournamentModal({ onClose }: { onClose: () => void }) {
   const [stageWinnerPoints, setStageWinnerPoints] = useState('')
   const [predictionsOpen, setPredictionsOpen] = useState<PredictionsOpen>('automatic')
   const [error, setError] = useState<string | null>(null)
-  const showGroupStage = providerSelection(externalId).provider === 'football-data-org'
+  const showGroupStage = supportsGroupStage(providerSelection(externalId).provider)
 
   async function handleCreate() {
     if (!name.trim()) return
@@ -433,7 +480,7 @@ export function EditTournamentModal({
   }
 
   const [name, setName] = useState(tournament.name)
-  const [stake, setStake] = useState(tournament.stake ?? '')
+  const [stake, setStake] = useState(normalizeStakeCurrency(tournament.stake ?? ''))
   const [externalId, setExternalId] = useState(
     tournament.external_provider && tournament.external_id ? `${tournament.external_provider}:${tournament.external_id}` : '',
   )
@@ -472,7 +519,7 @@ export function EditTournamentModal({
   )
   const [error, setError] = useState<string | null>(null)
   const [memberError, setMemberError] = useState<string | null>(null)
-  const showGroupStage = providerSelection(externalId).provider === 'football-data-org' || groupWinnerPoints !== '' || stageWinnerPoints !== ''
+  const showGroupStage = supportsGroupStage(providerSelection(externalId).provider)
   const providerUpdatedAt = tournament.provider_updated_at
     ? new Date(tournament.provider_updated_at).toLocaleString([], {
         day: '2-digit',
@@ -744,7 +791,7 @@ export function EditTournamentModal({
                           : 'text-gray-400 hover:text-green-500 dark:hover:text-green-400',
                       ].join(' ')}
                     >
-                      <CircleDollarSign size={14} />
+                      <span className="inline-flex h-3.5 w-3.5 items-center justify-center text-xs font-semibold">£</span>
                     </button>
                   )}
                   <button
@@ -781,7 +828,7 @@ export function EditTournamentModal({
               )
             })}
           </ul>
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-3"><b>Note:</b> 💲 user paid stake; 👑 promote to admin; ❌ remove from competition.</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-3"><b>Note:</b> £ user paid stake; 👑 promote to admin; ❌ remove from competition.</p>
           <ErrorMsg msg={memberError} />
         </div>
         <div className="flex flex-wrap gap-2">
