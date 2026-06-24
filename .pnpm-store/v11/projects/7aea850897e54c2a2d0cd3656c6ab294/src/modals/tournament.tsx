@@ -11,7 +11,7 @@ import {
 } from '../api/tournamentApi'
 import { useGetParticipantActivityQuery } from '../api/statsApi'
 import type { PredictionsOpen, TournamentAdminAction } from '../types'
-import { useListProviderTournamentsQuery } from '../api/providerApi'
+import { useGetProviderDiagnosticsQuery, useListProviderTournamentsQuery } from '../api/providerApi'
 import { useListTeamsQuery } from '../api/teamApi'
 import { useGetMeQuery } from '../api/authApi'
 import type { Tournament } from '../types'
@@ -402,6 +402,10 @@ export function EditTournamentModal({
   const [setStakePaid] = useSetStakePaidMutation()
   const [sendAdminAction, { isLoading: isActionLoading }] = useSendAdminActionMutation()
   const { data: participantActivity = [] } = useGetParticipantActivityQuery(tournament.id)
+  const { data: providerDiagnostics, isFetching: isFetchingProviderDiagnostics } = useGetProviderDiagnosticsQuery(
+    tournament.id,
+    { skip: !tournament.external_provider && !tournament.external_id },
+  )
   const activityMap = Object.fromEntries(participantActivity.map((a) => [a.user_id, a]))
   const [currentAction, setCurrentAction] = useState<TournamentAdminAction | null>(null)
   const isLoading = isSaving || isDeleting
@@ -471,6 +475,14 @@ export function EditTournamentModal({
   const showGroupStage = providerSelection(externalId).provider === 'football-data-org' || groupWinnerPoints !== '' || stageWinnerPoints !== ''
   const providerUpdatedAt = tournament.provider_updated_at
     ? new Date(tournament.provider_updated_at).toLocaleString([], {
+        day: '2-digit',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    : null
+  const diagnosticsUpdatedAt = providerDiagnostics?.last_updated_at
+    ? new Date(providerDiagnostics.last_updated_at).toLocaleString([], {
         day: '2-digit',
         month: 'short',
         hour: '2-digit',
@@ -615,6 +627,66 @@ export function EditTournamentModal({
           setPredictionsOpen={setPredictionsOpen}
           disabled={isLoading}
         />
+        {providerDiagnostics && (
+          <section className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/60 p-3 space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">Provider diagnostics</h3>
+              {isFetchingProviderDiagnostics && (
+                <span className="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+                  <Loader2 size={12} className="animate-spin" />
+                  Refreshing
+                </span>
+              )}
+            </div>
+            <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
+              <div>
+                <dt className="text-gray-500 dark:text-gray-400">Provider</dt>
+                <dd className="font-medium text-gray-800 dark:text-gray-200">{providerDiagnostics.provider ?? 'none'}</dd>
+              </div>
+              <div>
+                <dt className="text-gray-500 dark:text-gray-400">Configured</dt>
+                <dd className="font-medium text-gray-800 dark:text-gray-200">{providerDiagnostics.configured_provider}</dd>
+              </div>
+              <div>
+                <dt className="text-gray-500 dark:text-gray-400">League ID</dt>
+                <dd className="font-medium text-gray-800 dark:text-gray-200">{providerDiagnostics.competition_id ?? '-'}</dd>
+              </div>
+              <div>
+                <dt className="text-gray-500 dark:text-gray-400">Season</dt>
+                <dd className="font-medium text-gray-800 dark:text-gray-200">{providerDiagnostics.season ?? '-'}</dd>
+              </div>
+              <div>
+                <dt className="text-gray-500 dark:text-gray-400">Teams</dt>
+                <dd className="font-medium text-gray-800 dark:text-gray-200">{providerDiagnostics.team_count}</dd>
+              </div>
+              <div>
+                <dt className="text-gray-500 dark:text-gray-400">Matches</dt>
+                <dd className="font-medium text-gray-800 dark:text-gray-200">{providerDiagnostics.match_count}</dd>
+              </div>
+              <div className="col-span-2">
+                <dt className="text-gray-500 dark:text-gray-400">Last update</dt>
+                <dd className="font-medium text-gray-800 dark:text-gray-200">
+                  {providerDiagnostics.last_update_status ?? 'unknown'}
+                  {diagnosticsUpdatedAt ? ` at ${diagnosticsUpdatedAt}` : ''}
+                  {providerDiagnostics.last_update_match_count != null ? ` - ${providerDiagnostics.last_update_match_count} matches` : ''}
+                  {providerDiagnostics.last_update_team_count != null ? ` - ${providerDiagnostics.last_update_team_count} teams` : ''}
+                </dd>
+              </div>
+            </dl>
+            {providerDiagnostics.warnings.length > 0 && (
+              <div className="rounded-md border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 px-3 py-2">
+                <p className="text-xs font-semibold text-amber-800 dark:text-amber-300">Warnings</p>
+                <ul className="mt-1 space-y-1">
+                  {providerDiagnostics.warnings.map((warning) => (
+                    <li key={warning} className="text-xs text-amber-800 dark:text-amber-200">
+                      {warning}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </section>
+        )}
         <EditPointAndTeamFields
           tournamentId={tournament.id}
           firstPlacePoints={firstPlacePoints}

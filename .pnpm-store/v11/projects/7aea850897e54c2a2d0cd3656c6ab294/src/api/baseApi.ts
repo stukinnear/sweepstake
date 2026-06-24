@@ -80,7 +80,7 @@ export function addPolling<T extends (arg: any, options?: any) => any>(hook: T, 
 export const baseApi = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['Me', 'Tournament', 'Team', 'Group', 'Stage', 'Match', 'Prediction', 'TournamentPrediction', 'GroupPrediction', 'StagePrediction', 'MatchPrediction', 'Leaderboard', 'MatchStats', 'GroupStats', 'StageStats', 'TournamentStats'],
+  tagTypes: ['Me', 'Tournament', 'Team', 'Group', 'Stage', 'Match', 'Prediction', 'TournamentPrediction', 'GroupPrediction', 'StagePrediction', 'MatchPrediction', 'Leaderboard', 'MatchStats', 'GroupStats', 'StageStats', 'TournamentStats', 'ProviderDiagnostics'],
   keepUnusedDataFor: 60 * 60 * 24 * 2,
   refetchOnMountOrArgChange: 60 * 60,
   refetchOnFocus: true,

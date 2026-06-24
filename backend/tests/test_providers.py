@@ -164,3 +164,47 @@ async def test_import_thesportsdb_provider_normalizes_scottish_premiership(clien
     assert matches[0]["home_goals"] == 3
     assert matches[0]["away_goals"] == 2
     assert matches[0]["stage_name"] is None
+
+
+async def test_provider_diagnostics_reports_counts_and_warnings(client_user_1: AsyncClient):
+    tournament_resp = await client_user_1.post("/tournament", json={"name": "Diagnostics SPFL"})
+    tournament_id = tournament_resp.json()["id"]
+    await client_user_1.patch(
+        f"/tournament/{tournament_id}",
+        json={"external_provider": "thesportsdb", "external_id": "4330"},
+    )
+    team_resp = await client_user_1.post(
+        "/team",
+        json={
+            "name": "Aberdeen",
+            "iso_code": "ABE",
+            "image_url": "https://example.com/aberdeen.png",
+            "external_provider": "thesportsdb",
+            "external_id": "133638",
+            "tournament_id": tournament_id,
+        },
+    )
+    team_id = team_resp.json()["id"]
+    await client_user_1.post(
+        "/match",
+        json={
+            "tournament_id": tournament_id,
+            "start_datetime": "2026-08-01T15:00:00Z",
+            "home_team_id": team_id,
+            "away_team_id": team_id,
+            "external_provider": "thesportsdb",
+            "external_id": "fixture-1",
+        },
+    )
+
+    response = await client_user_1.get(f"/providers/diagnostics/{tournament_id}")
+
+    assert response.status_code == 200
+    diagnostics = response.json()
+    assert diagnostics["provider"] == "thesportsdb"
+    assert diagnostics["competition_id"] == "4330"
+    assert diagnostics["configured_league_id"] == "4330"
+    assert diagnostics["season"] == "2026-2027"
+    assert diagnostics["team_count"] == 1
+    assert diagnostics["match_count"] == 1
+    assert "Scottish Premiership should have 12 teams; this tournament has 1." in diagnostics["warnings"]

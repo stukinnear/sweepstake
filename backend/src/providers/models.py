@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class ProviderCompetition(BaseModel):
@@ -12,6 +12,23 @@ class ProviderCompetition(BaseModel):
     current_season_end: Optional[str] = None
     emblem_url: Optional[str] = None
     provider: str
+
+
+class ProviderDiagnostics(BaseModel):
+    tournament_id: int
+    provider: Optional[str] = None
+    configured_provider: str
+    competition_id: Optional[str] = None
+    configured_league_id: Optional[str] = None
+    season: Optional[str] = None
+    team_count: int
+    match_count: int
+    last_update_status: Optional[str] = None
+    last_update_message: Optional[str] = None
+    last_updated_at: Optional[datetime] = None
+    last_update_match_count: Optional[int] = None
+    last_update_team_count: Optional[int] = None
+    warnings: list[str] = Field(default_factory=list)
 
 
 class ProviderTeam(BaseModel):

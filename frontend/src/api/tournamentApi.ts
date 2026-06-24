@@ -103,6 +103,7 @@ export const tournamentApi = baseApi.injectEndpoints({
               { type: 'Tournament' as const, id },
               { type: 'Team' as const, id: 'LIST' },
               { type: 'Match' as const, id: 'LIST' },
+              { type: 'ProviderDiagnostics' as const, id },
             ]
           : [],
       async onQueryStarted({ id, action }, { dispatch, queryFulfilled }) {
@@ -112,6 +113,7 @@ export const tournamentApi = baseApi.injectEndpoints({
           { type: 'Tournament' as const, id },
           { type: 'Team' as const, id: 'LIST' },
           { type: 'Match' as const, id: 'LIST' },
+          { type: 'ProviderDiagnostics' as const, id },
         ]
         window.setTimeout(() => dispatch(tournamentApi.util.invalidateTags(tags)), 3_000)
         window.setTimeout(() => dispatch(tournamentApi.util.invalidateTags(tags)), 8_000)

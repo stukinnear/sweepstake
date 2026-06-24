@@ -12,6 +12,23 @@ export interface ProviderTournament {
   provider: 'football-data-org' | 'thesportsdb' | string
 }
 
+export interface ProviderDiagnostics {
+  tournament_id: number
+  provider: string | null
+  configured_provider: string
+  competition_id: string | null
+  configured_league_id: string | null
+  season: string | null
+  team_count: number
+  match_count: number
+  last_update_status: string | null
+  last_update_message: string | null
+  last_updated_at: string | null
+  last_update_match_count: number | null
+  last_update_team_count: number | null
+  warnings: string[]
+}
+
 
 export interface TournamentUser {
   id: number
