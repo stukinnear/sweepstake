@@ -73,6 +73,7 @@ def _build_text_body(
     first_place_points: Optional[int],
     second_place_points: Optional[int],
     third_place_points: Optional[int],
+    has_group_stage_predictions: bool = True,
     admin_sign_off: str = "The Organisers",
     admin_footer: Optional[list[dict]] = None,
 ) -> str:
@@ -96,18 +97,28 @@ def _build_text_body(
         ("Correct tournament winner", first_place_points),
         ("Correct runner-up", second_place_points),
         ("Correct third place", third_place_points),
-        ("Correct group winner", group_winner_points),
-        ("Correct stage/round winner", stage_winner_points),
+        ("Correct group winner", group_winner_points if has_group_stage_predictions else None),
+        ("Correct stage/round winner", stage_winner_points if has_group_stage_predictions else None),
         ("Correct match winner", match_winner_points),
         ("Exact match score", match_score_points),
     ]:
         if pts:
             lines.append(f"  {label}: {pts} pts")
+    winner_deadline_label = (
+        "Tournament / Stage / Group predictions"
+        if has_group_stage_predictions
+        else "Tournament winner predictions"
+    )
+    winner_deadline_detail = (
+        "submit by 23:59 the day BEFORE the first match."
+        if has_group_stage_predictions
+        else "submit by 23:59 the day BEFORE the first match."
+    )
     lines += [
         "",
         "PREDICTION DEADLINES",
         "-" * 40,
-        "Tournament / Stage / Group predictions: submit by 23:59 the day BEFORE the first match.",
+        f"{winner_deadline_label}: {winner_deadline_detail}",
         "Match predictions: submit up to 1 minute before kick-off.",
         "The organiser can add predictions on your behalf if you joined late.",
         "",
@@ -143,6 +154,7 @@ async def send_competition_welcome_email(
     third_place_points: Optional[int],
     admins: Optional[list[dict]] = None,
     user_id: Optional[int] = None,
+    has_group_stage_predictions: bool = True,
 ) -> None:
     admins = admins or []
     sign_off = _format_sign_off(admins)
@@ -158,11 +170,12 @@ async def send_competition_welcome_email(
         "stake": stake_html,
         "match_winner_points": match_winner_points or None,
         "match_score_points": match_score_points or None,
-        "group_winner_points": group_winner_points or None,
-        "stage_winner_points": stage_winner_points or None,
+        "group_winner_points": (group_winner_points or None) if has_group_stage_predictions else None,
+        "stage_winner_points": (stage_winner_points or None) if has_group_stage_predictions else None,
         "first_place_points": first_place_points or None,
         "second_place_points": second_place_points or None,
         "third_place_points": third_place_points or None,
+        "has_group_stage_predictions": has_group_stage_predictions,
         "admin_sign_off": sign_off,
         "admin_footer": footer_entries,
     }
@@ -179,6 +192,7 @@ async def send_competition_welcome_email(
         first_place_points=first_place_points,
         second_place_points=second_place_points,
         third_place_points=third_place_points,
+        has_group_stage_predictions=has_group_stage_predictions,
         admin_sign_off=sign_off,
         admin_footer=footer_entries,
     )

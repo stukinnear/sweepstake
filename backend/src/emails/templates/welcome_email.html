@@ -143,12 +143,22 @@
     </td>
     <td valign="top" style="padding:0 0 12px 12px;">
       <p style="margin:0 0 2px 0;color:#111827;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:bold;line-height:1.4;mso-line-height-rule:exactly;">
+        {% if has_group_stage_predictions %}
         Tournament, Stage &amp; Group Predictions
+        {% else %}
+        Tournament Winner Predictions
+        {% endif %}
       </p>
       <p style="margin:0;color:#374151;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;mso-line-height-rule:exactly;">
+        {% if has_group_stage_predictions %}
         Submit by <strong>23:59 the day before</strong> the first match of that
         tournament, stage, or group.  A countdown timer is shown in the top-right
         corner so you always know how much time is left.
+        {% else %}
+        Submit by <strong>23:59 the day before</strong> the first match of the
+        league. A countdown timer is shown in the top-right corner so you always
+        know how much time is left.
+        {% endif %}
       </p>
     </td>
   </tr>

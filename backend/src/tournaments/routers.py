@@ -23,6 +23,10 @@ logger = get_logger(__name__)
 router = APIRouter(prefix="/tournament", tags=["tournament"])
 
 
+def _has_group_stage_predictions(tournament: models.Tournament) -> bool:
+    return tournament.external_provider != "thesportsdb"
+
+
 @router.post("", response_model=models.TournamentRead, status_code=status.HTTP_201_CREATED)
 async def create_tournament_endpoint(
     tournament: models.TournamentCreate,
@@ -78,6 +82,7 @@ async def create_tournament_endpoint(
             third_place_points=new_tournament.third_place_points,
             admins=admins,
             user_id=user_id,
+            has_group_stage_predictions=_has_group_stage_predictions(new_tournament),
         )
     return new_tournament
 
@@ -291,6 +296,7 @@ async def join_tournament_endpoint(
             third_place_points=tournament.third_place_points,
             admins=admins,
             user_id=user_id,
+            has_group_stage_predictions=_has_group_stage_predictions(tournament),
         )
     return tournament
 
@@ -349,6 +355,7 @@ async def _bulk_send_welcome_emails(
     first_place_points,
     second_place_points,
     third_place_points,
+    has_group_stage_predictions: bool,
     requesting_admin: dict,
     wait_seconds: float,
 ) -> None:
@@ -372,6 +379,7 @@ async def _bulk_send_welcome_emails(
             third_place_points=third_place_points,
             admins=[requesting_admin],
             user_id=r["user_id"],
+            has_group_stage_predictions=has_group_stage_predictions,
         )
         await asyncio.sleep(wait_seconds)
     logger.info(
@@ -467,6 +475,7 @@ async def tournament_admin_action_endpoint(
             first_place_points=tournament.first_place_points,
             second_place_points=tournament.second_place_points,
             third_place_points=tournament.third_place_points,
+            has_group_stage_predictions=_has_group_stage_predictions(tournament),
             requesting_admin=requesting_admin,
             wait_seconds=_email_wait(len(recipients)),
         )

@@ -48,7 +48,11 @@
       </p>
       <p style="margin:0 0 12px 0;color:#78350f;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;mso-line-height-rule:exactly;">
         The first match of <strong>{{ tournament_name }}</strong> kicks off tomorrow.
+        {% if winner_reminder.has_groups or winner_reminder.has_stages %}
         Winner predictions close <strong>tonight at 23:59</strong> &mdash; don&apos;t miss your chance to pick:
+        {% else %}
+        Your tournament winner prediction closes <strong>tonight at 23:59</strong>.
+        {% endif %}
       </p>
       <table role="presentation" border="0" cellpadding="0" cellspacing="0">
         {% if winner_reminder.has_tournament %}

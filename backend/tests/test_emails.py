@@ -96,6 +96,7 @@ async def test_create_tournament_sends_welcome_email(client_user_1: AsyncClient,
     assert sent[0]["first_name"] == "Test"
     assert sent[0]["tournament_name"] == "Email Cup"
     assert sent[0]["stake"] == "Five pounds"
+    assert sent[0]["has_group_stage_predictions"] is True
 
 
 async def test_join_tournament_sends_welcome_email(client_user_1: AsyncClient, client_user_2: AsyncClient, monkeypatch):
@@ -176,3 +177,76 @@ async def test_resend_welcome_email_admin_action_sends_to_all_participants(
 
     assert response.status_code == 204
     assert [item["to_email"] for item in sent] == ["test@example.com", "other@example.com"]
+
+
+async def test_welcome_email_hides_group_stage_copy_for_league_tournament(monkeypatch):
+    from src.emails.welcome_email import send_competition_welcome_email
+
+    sent = []
+
+    async def fake_send_email(to_email, subject, html_body, text_body, **kwargs):
+        sent.append({"html": html_body, "text": text_body})
+
+    monkeypatch.setattr("src.emails.welcome_email.send_email", fake_send_email)
+
+    await send_competition_welcome_email(
+        to_email="person@example.com",
+        first_name="Test",
+        tournament_name="SPFL",
+        tournament_id=1,
+        stake=None,
+        match_winner_points=3,
+        match_score_points=5,
+        group_winner_points=8,
+        stage_winner_points=10,
+        first_place_points=25,
+        second_place_points=15,
+        third_place_points=None,
+        has_group_stage_predictions=False,
+    )
+
+    assert "Correct group winner" not in sent[0]["text"]
+    assert "Correct stage/round winner" not in sent[0]["text"]
+    assert "Tournament winner predictions" in sent[0]["text"]
+    assert "Tournament Winner Predictions" in sent[0]["html"]
+    assert "Correct group winner" not in sent[0]["html"]
+    assert "Correct stage / round winner" not in sent[0]["html"]
+
+
+async def test_upcoming_email_hides_group_stage_deadline_for_league_tournament(monkeypatch):
+    from src.emails.upcoming_matches_email import send_upcoming_matches_email
+
+    sent = []
+
+    async def fake_send_email(to_email, subject, html_body, text_body, **kwargs):
+        sent.append({"html": html_body, "text": text_body})
+
+    monkeypatch.setattr("src.emails.upcoming_matches_email.send_email", fake_send_email)
+
+    await send_upcoming_matches_email(
+        to_email="person@example.com",
+        first_name="Test",
+        tournament_name="SPFL",
+        tournament_id=1,
+        matches=[
+            {
+                "date_line": "Sat",
+                "time_line": "15:00",
+                "home_team_name": "Dundee",
+                "home_team_image_url": None,
+                "away_team_name": "Celtic",
+                "away_team_image_url": None,
+                "pred_home_score": None,
+                "pred_away_score": None,
+                "tv_channel": None,
+            }
+        ],
+        winner_reminder={"has_tournament": True, "has_groups": False, "has_stages": False},
+    )
+
+    assert "tournament winner prediction" in sent[0]["text"]
+    assert "Group Winners" not in sent[0]["text"]
+    assert "Stage Winners" not in sent[0]["text"]
+    assert "Your tournament winner prediction closes" in sent[0]["html"]
+    assert "Group Winners" not in sent[0]["html"]
+    assert "Stage Winners" not in sent[0]["html"]

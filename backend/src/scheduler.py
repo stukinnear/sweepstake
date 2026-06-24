@@ -141,10 +141,11 @@ async def _send_upcoming_match_reminders() -> None:
             tournament_start_date = min(match_dates) if match_dates else None
             winner_reminder = None
             if tournament_start_date == tomorrow:
+                has_group_stage_predictions = tournament.external_provider != "thesportsdb"
                 winner_reminder = {
                     "has_tournament": bool(tournament.first_place_points),
-                    "has_groups": bool(tournament.group_winner_points),
-                    "has_stages": bool(tournament.stage_winner_points),
+                    "has_groups": has_group_stage_predictions and bool(tournament.group_winner_points),
+                    "has_stages": has_group_stage_predictions and bool(tournament.stage_winner_points),
                 }
                 if not any(winner_reminder.values()):
                     winner_reminder = None

@@ -64,11 +64,16 @@ def _build_text_body(
         "",
     ]
     if winner_reminder:
+        prediction_label = (
+            "winner predictions"
+            if winner_reminder.get("has_groups") or winner_reminder.get("has_stages")
+            else "tournament winner prediction"
+        )
         lines += [
             "⏰ PREDICTION DEADLINE — TODAY AT 23:59",
             "-" * 60,
             f"The first match of {tournament_name} kicks off tomorrow.",
-            "Set your winner predictions before tonight at 23:59:",
+            f"Set your {prediction_label} before tonight at 23:59:",
         ]
         if winner_reminder.get("has_tournament"):
             lines.append("  - Tournament Winner")
