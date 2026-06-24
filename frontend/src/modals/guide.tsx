@@ -213,7 +213,7 @@ function ScoringRulesBody({ tournamentId }: { tournamentId: number | null }) {
     return <p className="text-sm text-gray-500 dark:text-gray-400">Loading scoring rules…</p>
   }
 
-  const showGroupStage = tournament.external_provider !== 'thesportsdb'
+  const showGroupStage = tournament.competition_format !== 'league'
   const rules: { label: string; points: number | null }[] = [
     { label: '🥇 Correct tournament winner', points: tournament.first_place_points },
     { label: '🥈 Correct runner-up', points: tournament.second_place_points },
@@ -314,7 +314,7 @@ function GuideModalInner({
 }) {
   useScrollLock()
   const { data: tournament } = useGetTournamentQuery(tournamentId!, { skip: tournamentId == null })
-  const hasGroupStagePredictions = tournament?.external_provider !== 'thesportsdb'
+  const hasGroupStagePredictions = tournament?.competition_format !== 'league'
     && (Boolean(tournament?.group_winner_points) || Boolean(tournament?.stage_winner_points))
   const participantPages: GuidePage[] = [
     PARTICIPANT_PAGES[0],

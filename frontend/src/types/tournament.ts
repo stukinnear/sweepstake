@@ -1,6 +1,7 @@
 import type { TeamRead } from './team'
 
 export type PredictionsOpen = 'automatic' | 'open' | 'closed'
+export type CompetitionFormat = 'league' | 'tournament'
 
 export interface ProviderTournament {
   id: string
@@ -16,6 +17,7 @@ export interface ProviderDiagnostics {
   tournament_id: number
   provider: string | null
   configured_provider: string
+  competition_format: CompetitionFormat | null
   competition_id: string | null
   configured_league_id: string | null
   season: string | null
@@ -54,6 +56,7 @@ export interface Tournament {
   group_winner_points: number | null
   stage_winner_points: number | null
   predictions_open: PredictionsOpen
+  competition_format: CompetitionFormat
   provider_update_status: string | null
   provider_update_message: string | null
   provider_updated_at: string | null
@@ -84,6 +87,7 @@ export interface TournamentCreate {
   group_winner_points?: number | null
   stage_winner_points?: number | null
   predictions_open?: PredictionsOpen
+  competition_format?: CompetitionFormat | null
 }
 
 export type TournamentUpdate = Partial<TournamentCreate>

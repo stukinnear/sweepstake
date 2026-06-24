@@ -135,8 +135,8 @@ export function TournamentPage() {
     </button>
   ) : undefined
 
-  const showGroupStageRules = tournament.external_provider !== 'thesportsdb'
-  const showStageManagement = tournament.external_provider !== 'thesportsdb'
+  const showGroupStageRules = tournament.competition_format !== 'league'
+  const showStageManagement = tournament.competition_format !== 'league'
   const teamById = new Map(teams.map((team) => [team.id, team]))
   const imageForTeam = (team: Match['home_team']) =>
     team?.image_url ?? (team?.id ? teamById.get(team.id)?.image_url : null)

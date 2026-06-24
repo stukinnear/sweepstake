@@ -10,7 +10,7 @@ import {
   useSendAdminActionMutation,
 } from '../api/tournamentApi'
 import { useGetParticipantActivityQuery } from '../api/statsApi'
-import type { PredictionsOpen, TournamentAdminAction } from '../types'
+import type { CompetitionFormat, PredictionsOpen, TournamentAdminAction } from '../types'
 import { useGetProviderDiagnosticsQuery, useListProviderTournamentsQuery } from '../api/providerApi'
 import { useListTeamsQuery } from '../api/teamApi'
 import { useGetMeQuery } from '../api/authApi'
@@ -55,8 +55,12 @@ function providerSelection(value: string): { provider?: string; id?: string } {
   return { provider, id: rest.join(':') }
 }
 
-function supportsGroupStage(provider?: string): boolean {
-  return provider !== 'thesportsdb'
+function competitionFormatForProvider(provider?: string): CompetitionFormat {
+  return provider === 'thesportsdb' ? 'league' : 'tournament'
+}
+
+function supportsGroupStage(format?: CompetitionFormat | null): boolean {
+  return format !== 'league'
 }
 
 function normalizeStakeCurrency(value: string): string {
@@ -315,7 +319,7 @@ function TournamentInfoFields({
             <span className="pointer-events-none absolute bottom-full left-0 mb-2 w-72 rounded-lg bg-gray-800 dark:bg-gray-900 text-white text-xs font-normal px-3 py-2 shadow-lg opacity-0 group-hover/tip:opacity-100 transition-opacity z-50 normal-case tracking-normal leading-relaxed">
               With <strong>Automatic</strong>, winner-style predictions are automatically closed on the day of their first relevant match.
               {' '}<strong>Open</strong> keeps those predictions open regardless of schedule.
-              {' '}<strong>Closed</strong> prevents users from submitting tournament, group, and stage predictions.
+              {' '}<strong>Closed</strong> prevents users from submitting winner-style predictions.
               {' '}Match predictions are always controlled by the individual match kick-off time.
               {' '}Admins can always update other users' predictions.
               <span className="absolute top-full left-3 border-4 border-transparent border-t-gray-800 dark:border-t-gray-900" />
@@ -357,7 +361,8 @@ export function CreateTournamentModal({ onClose }: { onClose: () => void }) {
   const [stageWinnerPoints, setStageWinnerPoints] = useState('')
   const [predictionsOpen, setPredictionsOpen] = useState<PredictionsOpen>('automatic')
   const [error, setError] = useState<string | null>(null)
-  const showGroupStage = supportsGroupStage(providerSelection(externalId).provider)
+  const selectedFormat = competitionFormatForProvider(providerSelection(externalId).provider)
+  const showGroupStage = supportsGroupStage(selectedFormat)
 
   async function handleCreate() {
     if (!name.trim()) return
@@ -369,6 +374,7 @@ export function CreateTournamentModal({ onClose }: { onClose: () => void }) {
         stake: stake.trim() || null,
         external_provider: selectedProvider.provider,
         external_id: selectedProvider.id,
+        competition_format: selectedFormat,
         first_place_points: firstPlacePoints !== '' ? Number(firstPlacePoints) : undefined,
         second_place_points: secondPlacePoints !== '' ? Number(secondPlacePoints) : undefined,
         third_place_points: thirdPlacePoints !== '' ? Number(thirdPlacePoints) : undefined,
@@ -519,7 +525,8 @@ export function EditTournamentModal({
   )
   const [error, setError] = useState<string | null>(null)
   const [memberError, setMemberError] = useState<string | null>(null)
-  const showGroupStage = supportsGroupStage(providerSelection(externalId).provider)
+  const selectedFormat = competitionFormatForProvider(providerSelection(externalId).provider)
+  const showGroupStage = supportsGroupStage(selectedFormat)
   const providerUpdatedAt = tournament.provider_updated_at
     ? new Date(tournament.provider_updated_at).toLocaleString([], {
         day: '2-digit',
@@ -641,6 +648,7 @@ export function EditTournamentModal({
           stake: stake.trim() || null,
           external_provider: selectedProvider.provider ?? null,
           external_id: selectedProvider.id ?? null,
+          competition_format: selectedFormat,
           first_place_team_id: firstPlaceTeamId !== '' ? Number(firstPlaceTeamId) : undefined,
           second_place_team_id: secondPlaceTeamId !== '' ? Number(secondPlaceTeamId) : undefined,
           third_place_team_id: thirdPlaceTeamId !== '' ? Number(thirdPlaceTeamId) : undefined,
@@ -693,6 +701,10 @@ export function EditTournamentModal({
               <div>
                 <dt className="text-gray-500 dark:text-gray-400">Configured</dt>
                 <dd className="font-medium text-gray-800 dark:text-gray-200">{providerDiagnostics.configured_provider}</dd>
+              </div>
+              <div>
+                <dt className="text-gray-500 dark:text-gray-400">Format</dt>
+                <dd className="font-medium text-gray-800 dark:text-gray-200">{providerDiagnostics.competition_format ?? '-'}</dd>
               </div>
               <div>
                 <dt className="text-gray-500 dark:text-gray-400">League ID</dt>

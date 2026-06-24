@@ -18,6 +18,7 @@ class ProviderDiagnostics(BaseModel):
     tournament_id: int
     provider: Optional[str] = None
     configured_provider: str
+    competition_format: Optional[str] = None
     competition_id: Optional[str] = None
     configured_league_id: Optional[str] = None
     season: Optional[str] = None

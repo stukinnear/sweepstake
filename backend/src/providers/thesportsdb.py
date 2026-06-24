@@ -8,6 +8,7 @@ from src.config import settings
 from src.logging_config import get_logger
 from src.providers.base import FootballProvider
 from src.providers.models import ProviderCompetition, ProviderMatch, ProviderTeam
+from src.tournaments import models as tournament_models
 
 logger = get_logger(__name__)
 
@@ -32,6 +33,7 @@ SCOTTISH_PREMIERSHIP_TEAM_NAME_SET = {
 
 class TheSportsDBProvider(FootballProvider):
     provider_id = "thesportsdb"
+    competition_format = tournament_models.CompetitionFormat.league
 
     def __init__(self) -> None:
         self._team_cache: dict[str, dict | None] = {}

@@ -71,11 +71,17 @@ def _generate_join_code(name: str, user_id: int) -> str:
 
 async def create_tournament(db: AsyncSession, tournament: models.TournamentCreate, user_id: int):
     """Create a new tournament and add the creator as an admin."""
+    provider_id = tournament.external_provider or ("football-data-org" if tournament.football_data_org_id else None)
     db_tournament = models.Tournament(
         name=tournament.name,
         stake=tournament.stake,
-        external_provider=tournament.external_provider or ("football-data-org" if tournament.football_data_org_id else None),
+        external_provider=provider_id,
         external_id=tournament.external_id or (str(tournament.football_data_org_id) if tournament.football_data_org_id else None),
+        competition_format=(
+            models.CompetitionFormat.league
+            if provider_id == "thesportsdb"
+            else models.infer_competition_format(provider_id, tournament.competition_format)
+        ),
         football_data_org_id=(
             int(tournament.external_id or tournament.football_data_org_id)
             if (tournament.external_provider == "football-data-org" or tournament.football_data_org_id)
@@ -104,7 +110,6 @@ async def create_tournament(db: AsyncSession, tournament: models.TournamentCreat
 
     await db.commit()
 
-    provider_id = tournament.external_provider or ("football-data-org" if tournament.football_data_org_id else None)
     external_id = tournament.external_id or (str(tournament.football_data_org_id) if tournament.football_data_org_id else None)
     if provider_id and external_id:
         await get_provider(provider_id).import_competition(
@@ -163,6 +168,8 @@ async def update_tournament(
 
     for field, value in update_data.items():
         setattr(db_tournament, field, value)
+    if "external_provider" in update_data and "competition_format" not in update_data:
+        db_tournament.competition_format = models.infer_competition_format(db_tournament.external_provider, None)
 
     if "admin_ids" in tournament_update.model_fields_set:
         # Replace admin list (creator always remains an admin)

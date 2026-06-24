@@ -83,6 +83,10 @@ async def get_provider_diagnostics(
         tournament_id=tournament_id,
         provider=provider_id,
         configured_provider=settings.football_provider,
+        competition_format=tournament_models.infer_competition_format(
+            tournament.external_provider,
+            tournament.competition_format,
+        ),
         competition_id=competition_id,
         configured_league_id=configured_league_id,
         season=season,

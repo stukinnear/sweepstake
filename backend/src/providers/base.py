@@ -28,6 +28,7 @@ def _label(value: Optional[str]) -> Optional[str]:
 
 class FootballProvider(ABC):
     provider_id: str
+    competition_format: tournament_models.CompetitionFormat = tournament_models.CompetitionFormat.tournament
 
     @abstractmethod
     async def list_competitions(self) -> list[ProviderCompetition]:
@@ -53,6 +54,7 @@ class FootballProvider(ABC):
         provider_teams = await self.fetch_teams(competition_id)
         tournament.external_provider = self.provider_id
         tournament.external_id = str(competition_id)
+        tournament.competition_format = self.competition_format
         if self.provider_id == "football-data-org" and str(competition_id).isdigit():
             tournament.football_data_org_id = int(competition_id)
 

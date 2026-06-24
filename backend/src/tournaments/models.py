@@ -52,6 +52,20 @@ class PredictionsOpen(str, Enum):
     closed = "closed"
 
 
+class CompetitionFormat(str, Enum):
+    league = "league"
+    tournament = "tournament"
+
+
+def infer_competition_format(
+    external_provider: Optional[str],
+    competition_format: Optional[CompetitionFormat | str] = None,
+) -> CompetitionFormat:
+    if competition_format:
+        return CompetitionFormat(competition_format)
+    return CompetitionFormat.league if external_provider == "thesportsdb" else CompetitionFormat.tournament
+
+
 class TournamentBase(SQLModel):
     """Shared tournament fields used across create, read, and update schemas."""
     name: str = Field(..., min_length=1, max_length=255)
@@ -70,6 +84,7 @@ class TournamentBase(SQLModel):
     group_winner_points: Optional[int] = Field(default=8, ge=0)
     stage_winner_points: Optional[int] = Field(default=0, ge=0)
     predictions_open: PredictionsOpen = Field(default=PredictionsOpen.automatic)
+    competition_format: Optional[CompetitionFormat] = Field(default=CompetitionFormat.tournament)
     provider_update_status: Optional[str] = Field(default=None, max_length=32)
     provider_update_message: Optional[str] = Field(default=None, max_length=512)
     provider_updated_at: Optional[datetime] = Field(default=None)
@@ -87,6 +102,7 @@ class Tournament(TournamentBase, table=True):
         default=PredictionsOpen.automatic,
         sa_column=sa.Column(sa.String(16), nullable=False, default="automatic", server_default="automatic"),
     )
+    competition_format: Optional[CompetitionFormat] = Field(default=None, sa_column=sa.Column(sa.String(16), nullable=True))
     external_provider: Optional[str] = Field(default=None, sa_column=sa.Column(sa.String(64), nullable=True, index=True))
     external_id: Optional[str] = Field(default=None, sa_column=sa.Column(sa.String(128), nullable=True, index=True))
     provider_update_status: Optional[str] = Field(default=None, sa_column=sa.Column(sa.String(32), nullable=True))
@@ -180,6 +196,17 @@ class TournamentRead(TournamentBase):
     @classmethod
     def populate_relation_users(cls, data):
         # Populate admin_lst and participant_lst with dicts {id, user_name}
+        if isinstance(data, dict):
+            data["competition_format"] = infer_competition_format(
+                data.get("external_provider"),
+                data.get("competition_format"),
+            )
+            return data
+        if getattr(data, "competition_format", None) is None:
+            data.__dict__["competition_format"] = infer_competition_format(
+                getattr(data, "external_provider", None),
+                None,
+            )
         if hasattr(data, "admins"):
             data.__dict__.setdefault(
                 "admin_lst",

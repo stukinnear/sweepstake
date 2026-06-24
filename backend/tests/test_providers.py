@@ -100,6 +100,7 @@ async def test_import_football_data_org_provider_normalizes_data(client_user_1: 
     tournament = response.json()
     assert tournament["external_provider"] == "football-data-org"
     assert tournament["external_id"] == "2000"
+    assert tournament["competition_format"] == "tournament"
 
     teams = (await client_user_1.get(f"/team?tournament_id={tournament['id']}")).json()
     assert {team["external_id"] for team in teams} == {"101", "102"}
@@ -144,6 +145,7 @@ async def test_import_thesportsdb_provider_normalizes_scottish_premiership(clien
     tournament = response.json()
     assert tournament["external_provider"] == "thesportsdb"
     assert tournament["external_id"] == "4330"
+    assert tournament["competition_format"] == "league"
 
     teams = (await client_user_1.get(f"/team?tournament_id={tournament['id']}")).json()
     team_names = {team["name"] for team in teams}
@@ -202,6 +204,7 @@ async def test_provider_diagnostics_reports_counts_and_warnings(client_user_1: A
     assert response.status_code == 200
     diagnostics = response.json()
     assert diagnostics["provider"] == "thesportsdb"
+    assert diagnostics["competition_format"] == "league"
     assert diagnostics["competition_id"] == "4330"
     assert diagnostics["configured_league_id"] == "4330"
     assert diagnostics["season"] == "2026-2027"

@@ -87,7 +87,7 @@ async def _send_upcoming_match_reminders() -> None:
     from src.database import AsyncSessionLocal
     from src.matches.models import Match
     from src.predictions.models import PredictMatch
-    from src.tournaments.models import Tournament
+    from src.tournaments.models import CompetitionFormat, Tournament, infer_competition_format
     from src.emails.upcoming_matches_email import send_upcoming_matches_email
 
     local_tz = ZoneInfo(settings.tz)
@@ -141,7 +141,10 @@ async def _send_upcoming_match_reminders() -> None:
             tournament_start_date = min(match_dates) if match_dates else None
             winner_reminder = None
             if tournament_start_date == tomorrow:
-                has_group_stage_predictions = tournament.external_provider != "thesportsdb"
+                has_group_stage_predictions = (
+                    infer_competition_format(tournament.external_provider, tournament.competition_format)
+                    == CompetitionFormat.tournament
+                )
                 winner_reminder = {
                     "has_tournament": bool(tournament.first_place_points),
                     "has_groups": has_group_stage_predictions and bool(tournament.group_winner_points),

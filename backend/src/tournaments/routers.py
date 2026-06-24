@@ -25,7 +25,10 @@ router = APIRouter(prefix="/tournament", tags=["tournament"])
 
 
 def _has_group_stage_predictions(tournament: models.Tournament) -> bool:
-    return tournament.external_provider != "thesportsdb"
+    return models.infer_competition_format(
+        tournament.external_provider,
+        tournament.competition_format,
+    ) == models.CompetitionFormat.tournament
 
 
 @router.post("", response_model=models.TournamentRead, status_code=status.HTTP_201_CREATED)
@@ -42,6 +45,7 @@ async def create_tournament_endpoint(
     - **stake**: Optional multi-line text describing the stake or prize for the tournament
     - **external_provider**: Optional provider ID (`football-data-org` or `thesportsdb`) for automatic schedule and score fetching
     - **external_id**: Optional provider competition/league ID for automatic schedule and score fetching
+    - **competition_format**: `league` for league-style competitions, `tournament` for group/stage competitions
     - **first_place_team_id**: Optional team ID for the tournament winner
     - **second_place_team_id**: Optional team ID for the runner-up
     - **third_place_team_id**: Optional team ID for third place
@@ -159,6 +163,7 @@ async def patch_tournament_endpoint(
     - **name**: Tournament name
     - **external_provider**: Optional provider ID (`football-data-org` or `thesportsdb`) for automatic schedule and score fetching
     - **external_id**: Optional provider competition/league ID for automatic schedule and score fetching
+    - **competition_format**: `league` for league-style competitions, `tournament` for group/stage competitions
     - **first_place_team_id**: Optional team ID for the tournament winner
     - **second_place_team_id**: Optional team ID for the runner-up
     - **third_place_team_id**: Optional team ID for third place

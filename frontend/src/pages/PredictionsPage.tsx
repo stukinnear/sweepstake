@@ -519,7 +519,7 @@ export function PredictionsPage() {
   const visibleMatches = restrictToPublished
     ? allMatches.filter((m) => parseServerDt(m.start_datetime).getTime() <= nowMs)
     : allMatches
-  const showStageGrouping = tournament.external_provider !== 'thesportsdb'
+  const showStageGrouping = tournament.competition_format !== 'league'
   const grouped = showStageGrouping
     ? groupByStage(visibleMatches)
     : new Map(visibleMatches.length ? [['Matches', visibleMatches]] : [])
