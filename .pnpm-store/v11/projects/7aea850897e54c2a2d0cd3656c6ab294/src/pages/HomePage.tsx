@@ -204,9 +204,8 @@ export function HomePage() {
           Sweep<span className="text-teal-400">Stake</span>
         </h1>
         <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-white/80 sm:text-xl">
-          Think you know football better than your mates? Prove it. Predict match
-          scores and tournament winners, rack up points, and settle the debate
-          once and for all.
+          After the success of the World Cup Prediction I thought I would create
+          one for the SPFL 2026/27. This really is a marathon.
         </p>
         <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
           <Link to={`/login${search}`} className={primaryBtn}>Sign in</Link>
