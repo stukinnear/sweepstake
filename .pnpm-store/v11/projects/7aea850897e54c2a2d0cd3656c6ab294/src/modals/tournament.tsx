@@ -469,6 +469,14 @@ export function EditTournamentModal({
   const [error, setError] = useState<string | null>(null)
   const [memberError, setMemberError] = useState<string | null>(null)
   const showGroupStage = providerSelection(externalId).provider === 'football-data-org' || groupWinnerPoints !== '' || stageWinnerPoints !== ''
+  const providerUpdatedAt = tournament.provider_updated_at
+    ? new Date(tournament.provider_updated_at).toLocaleString([], {
+        day: '2-digit',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    : null
 
   async function handleToggleStakePaid(userId: number, isCurrentlyPaid: boolean) {
     setMemberError(null)
@@ -708,6 +716,7 @@ export function EditTournamentModal({
           {tournament.stake && (() => {
             const mins = minsLeft('send-payment-reminder')
             return (
+              <>
               <button
                 type="button"
                 onClick={() => handleAdminAction('send-payment-reminder')}
@@ -722,11 +731,13 @@ export function EditTournamentModal({
                   ? 'Sending…'
                   : mins !== null ? `Sending Payment Reminders… (~${mins}m)` : 'Send Payment Reminders'}
               </button>
+              </>
             )
           })()}
           {tournament.external_id && (() => {
             const mins = minsLeft('update-tournament')
             return (
+              <>
               <button
                 type="button"
                 onClick={() => handleAdminAction('update-tournament')}
@@ -741,6 +752,16 @@ export function EditTournamentModal({
                   ? 'Updating…'
                   : mins !== null ? `API Update available in ~${mins}m` : 'API Update'}
               </button>
+              {(tournament.provider_update_status || providerUpdatedAt) && (
+                <p className="basis-full text-xs text-gray-500 dark:text-gray-400">
+                  API status: {tournament.provider_update_status ?? 'unknown'}
+                  {providerUpdatedAt ? ` at ${providerUpdatedAt}` : ''}
+                  {tournament.provider_update_match_count != null ? ` - ${tournament.provider_update_match_count} matches` : ''}
+                  {tournament.provider_update_team_count != null ? ` - ${tournament.provider_update_team_count} teams` : ''}
+                  {tournament.provider_update_message ? ` - ${tournament.provider_update_message}` : ''}
+                </p>
+              )}
+              </>
             )
           })()}
           {/* {(() => {

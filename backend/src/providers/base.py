@@ -94,17 +94,40 @@ class FootballProvider(ABC):
         return tournament
 
     async def update_competition(self, db: AsyncSession, competition_id: str) -> None:
-        raw, matches = await self.fetch_matches(competition_id)
-        provider_teams = await self.fetch_teams(competition_id)
-        data_hash = hashlib.md5(str(raw).encode()).hexdigest()
-        hash_file = _DATA_DIR / f"provider_hash_{self.provider_id}_{competition_id}.txt"
-        legacy_hash_file = _DATA_DIR / f"football_data_hash_{competition_id}.txt"
         tournament_ids = await self._tournament_ids(db, competition_id)
+        await self._set_update_status(
+            db,
+            tournament_ids,
+            "running",
+            f"Updating {self.provider_id} competition {competition_id}",
+        )
+        await db.commit()
+
+        try:
+            raw, matches = await self.fetch_matches(competition_id)
+            provider_teams = await self.fetch_teams(competition_id)
+            data_hash = hashlib.md5(str(raw).encode()).hexdigest()
+            hash_file = _DATA_DIR / f"provider_hash_{self.provider_id}_{competition_id}.txt"
+            legacy_hash_file = _DATA_DIR / f"football_data_hash_{competition_id}.txt"
+        except Exception as exc:
+            await self._set_update_status(db, tournament_ids, "failed", str(exc)[:512])
+            await db.commit()
+            raise
+
         if hash_file.is_file() and hash_file.read_text().strip() == data_hash:
             if self.provider_id == "thesportsdb" or await self._has_missing_team_images(db, tournament_ids):
                 logger.info("No match changes for %s competition %s; refreshing team metadata.", self.provider_id, competition_id)
             else:
                 logger.info("No changes detected for %s competition %s; skipping import.", self.provider_id, competition_id)
+                await self._set_update_status(
+                    db,
+                    tournament_ids,
+                    "success",
+                    "No changes detected.",
+                    match_count=len(matches),
+                    team_count=len(provider_teams) if provider_teams else None,
+                )
+                await db.commit()
                 return
 
         cutoff = datetime.now(timezone.utc) - timedelta(hours=24)
@@ -117,6 +140,14 @@ class FootballProvider(ABC):
         hash_unchanged = hash_file.is_file() and hash_file.read_text().strip() == data_hash
         await self._refresh_team_metadata(db, tournament_ids, matches, provider_teams, competition_id)
         if hash_unchanged and self.provider_id != "thesportsdb":
+            await self._set_update_status(
+                db,
+                tournament_ids,
+                "success",
+                "No match changes; team metadata refreshed.",
+                match_count=len(matches),
+                team_count=len(provider_teams) if provider_teams else None,
+            )
             await db.commit()
             return
 
@@ -138,10 +169,39 @@ class FootballProvider(ABC):
         for match_id in match_ids_to_rescore:
             await predictions_scoring.recalculate_match_points(db, match_id)
 
+        await self._set_update_status(
+            db,
+            tournament_ids,
+            "success",
+            "Provider update completed.",
+            match_count=len(matches),
+            team_count=len(provider_teams) if provider_teams else None,
+        )
         await db.commit()
         hash_file.write_text(data_hash)
         if self.provider_id == "football-data-org":
             legacy_hash_file.write_text(data_hash)
+
+    async def _set_update_status(
+        self,
+        db: AsyncSession,
+        tournament_ids: list[int],
+        status: str,
+        message: str,
+        match_count: int | None = None,
+        team_count: int | None = None,
+    ) -> None:
+        for tournament_id in tournament_ids:
+            tournament = await db.get(tournament_models.Tournament, tournament_id)
+            if not tournament:
+                continue
+            tournament.provider_update_status = status
+            tournament.provider_update_message = message
+            tournament.provider_updated_at = datetime.now(timezone.utc)
+            if match_count is not None:
+                tournament.provider_update_match_count = match_count
+            if team_count is not None:
+                tournament.provider_update_team_count = team_count
 
     async def _has_missing_team_images(self, db: AsyncSession, tournament_ids: list[int]) -> bool:
         if not tournament_ids:

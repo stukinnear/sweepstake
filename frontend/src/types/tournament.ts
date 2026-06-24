@@ -37,6 +37,11 @@ export interface Tournament {
   group_winner_points: number | null
   stage_winner_points: number | null
   predictions_open: PredictionsOpen
+  provider_update_status: string | null
+  provider_update_message: string | null
+  provider_updated_at: string | null
+  provider_update_match_count: number | null
+  provider_update_team_count: number | null
   admin_lst: TournamentUser[]
   participant_lst: TournamentUser[]
   start_date: string | null

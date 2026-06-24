@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from enum import Enum
 from typing import Optional, List
 
@@ -70,6 +70,11 @@ class TournamentBase(SQLModel):
     group_winner_points: Optional[int] = Field(default=8, ge=0)
     stage_winner_points: Optional[int] = Field(default=0, ge=0)
     predictions_open: PredictionsOpen = Field(default=PredictionsOpen.automatic)
+    provider_update_status: Optional[str] = Field(default=None, max_length=32)
+    provider_update_message: Optional[str] = Field(default=None, max_length=512)
+    provider_updated_at: Optional[datetime] = Field(default=None)
+    provider_update_match_count: Optional[int] = Field(default=None, ge=0)
+    provider_update_team_count: Optional[int] = Field(default=None, ge=0)
 
 
 class Tournament(TournamentBase, table=True):
@@ -84,6 +89,11 @@ class Tournament(TournamentBase, table=True):
     )
     external_provider: Optional[str] = Field(default=None, sa_column=sa.Column(sa.String(64), nullable=True, index=True))
     external_id: Optional[str] = Field(default=None, sa_column=sa.Column(sa.String(128), nullable=True, index=True))
+    provider_update_status: Optional[str] = Field(default=None, sa_column=sa.Column(sa.String(32), nullable=True))
+    provider_update_message: Optional[str] = Field(default=None, sa_column=sa.Column(sa.String(512), nullable=True))
+    provider_updated_at: Optional[datetime] = Field(default=None, sa_column=sa.Column(sa.DateTime(timezone=True), nullable=True))
+    provider_update_match_count: Optional[int] = Field(default=None)
+    provider_update_team_count: Optional[int] = Field(default=None)
     # Legacy column retained so existing installs do not drop provider IDs during startup auto-migration.
     football_data_org_id: Optional[int] = Field(default=None, unique=False)
     first_place_team_id: Optional[int] = Field(default=None, sa_column=sa.Column(sa.Integer, sa.ForeignKey("team.id", use_alter=True, name="fk_tournament_first_place_team_id"), nullable=True))

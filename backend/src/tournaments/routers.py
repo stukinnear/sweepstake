@@ -1,6 +1,7 @@
 """Tournament management routes: create, read, update, delete operations."""
 
 import asyncio
+from datetime import datetime, timezone
 from fastapi import APIRouter, BackgroundTasks, Depends, Response, status, Path, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -451,6 +452,10 @@ async def tournament_admin_action_endpoint(
         competition_id = tournament.external_id or (str(tournament.football_data_org_id) if tournament.football_data_org_id else None)
         if not provider_id or not competition_id:
             raise CustomError("This tournament has no external provider ID configured", status_code=400)
+        tournament.provider_update_status = "queued"
+        tournament.provider_update_message = f"Queued update for {provider_id} competition {competition_id}"
+        tournament.provider_updated_at = datetime.now(timezone.utc)
+        await db.commit()
         background_tasks.add_task(
             get_provider(provider_id).update_competition,
             db,
