@@ -269,6 +269,16 @@ cd backend
 pytest tests/
 ```
 
+#### Frontend validation
+
+```sh
+cd frontend
+npm ci
+npm run check
+```
+
+`npm run check` runs `npm run lint && npm run build`. GitHub Actions also runs frontend install, lint, and build in `.github/workflows/ci.yml`.
+
 #### Importing fixtures from a provider
 
 1. Set `FOOTBALL_PROVIDER` to `football-data-org` or `thesportsdb` in `data/.env`.
