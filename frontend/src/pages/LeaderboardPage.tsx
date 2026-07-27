@@ -42,7 +42,6 @@ export function LeaderboardPage() {
       <div className="p-6 sm:p-8 space-y-8">
         <TournamentPageHeader
           tournament={tournament}
-          currentUserId={currentUser?.id}
         />
 
         {/* Leaderboard */}

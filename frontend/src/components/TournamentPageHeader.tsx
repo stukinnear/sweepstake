@@ -1,6 +1,5 @@
 import { useState, type ReactNode } from 'react'
 import { NavLink, Link } from 'react-router-dom'
-import { AlertCircle, CheckCircle } from 'lucide-react'
 import type { Tournament } from '../types/tournament'
 
 export function StakeText({ text }: { text: string }) {
@@ -26,7 +25,6 @@ export function StakeText({ text }: { text: string }) {
 
 interface TournamentPageHeaderProps {
   tournament: Tournament
-  currentUserId?: number | null
   /** Extra buttons rendered next to "← Back to Overview" (e.g. the admin Edit button). */
   rightActions?: ReactNode
   /** When set, an extra "{viewingUserName}'s Predictions" nav item is shown. */
@@ -36,7 +34,6 @@ interface TournamentPageHeaderProps {
 
 export function TournamentPageHeader({
   tournament,
-  currentUserId,
   rightActions,
   viewingUserId,
   viewingUserName,
@@ -56,9 +53,6 @@ export function TournamentPageHeader({
     })
   }
 
-  const myEntry = tournament.participant_lst.find((p) => p.id === currentUserId)
-  const paid = myEntry?.stake_paid ?? false
-
   const [copied, setCopied] = useState(false)
   function handleCopyJoinCode() {
     if (!tournament.join_code) return
@@ -73,18 +67,6 @@ export function TournamentPageHeader({
       setTimeout(() => setCopied(false), 2000)
     })
   }
-
-  const stakeBadge = tournament.stake ? (
-    <span className={[
-      'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap',
-      paid
-        ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400'
-        : 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400',
-    ].join(' ')}>
-      {paid ? <CheckCircle size={12} /> : <AlertCircle size={12} />}
-      {paid ? 'Stake paid' : 'Stake unpaid'}
-    </span>
-  ) : null
 
   const joinCodeEl = tournament.join_code ? (
     <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -118,11 +100,10 @@ export function TournamentPageHeader({
         </div>
         {/* Row 2: tournament name */}
         <h1 className="text-2xl font-bold">{tournament.name}</h1>
-        {/* Row 3: join code (left) + stake badge (right) */}
-        {(joinCodeEl || stakeBadge) && (
+        {/* Row 3: join code */}
+        {joinCodeEl && (
           <div className="flex items-center justify-between gap-2">
-            {joinCodeEl ?? <span />}
-            {stakeBadge}
+            {joinCodeEl}
           </div>
         )}
         {/* Row 4: stake text */}
@@ -154,7 +135,6 @@ export function TournamentPageHeader({
             </Link>
             {rightActions}
           </div>
-          {stakeBadge}
         </div>
       </div>
       </div>

@@ -595,7 +595,6 @@ export function PredictionsPage() {
       <div className="p-6 sm:p-8 space-y-8">
         <TournamentPageHeader
           tournament={tournament}
-          currentUserId={currentUser?.id}
           viewingUserId={isViewingOther ? targetUserId : undefined}
           viewingUserName={viewingUser?.user_name ?? undefined}
         />

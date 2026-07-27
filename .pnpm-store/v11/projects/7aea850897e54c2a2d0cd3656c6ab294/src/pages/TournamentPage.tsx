@@ -208,7 +208,6 @@ export function TournamentPage() {
       <div className="p-6 sm:p-8 space-y-8">
         <TournamentPageHeader
           tournament={tournament}
-          currentUserId={me?.id}
           rightActions={editButton}
         />
 
