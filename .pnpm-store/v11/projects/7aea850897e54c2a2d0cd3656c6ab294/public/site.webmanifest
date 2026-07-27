@@ -1,7 +1,7 @@
 {
-  "name": "SweepStake",
-  "short_name": "SweepStake",
-  "description": "Predict football match results, compete with friends, and follow your tournament standings in real time.",
+  "name": "SPFL Sweepstake",
+  "short_name": "SPFL Sweepstake",
+  "description": "Predict football match results, compete with friends, and follow your league standings in real time.",
   "start_url": "/overview",
   "scope": "/",
   "display": "standalone",
