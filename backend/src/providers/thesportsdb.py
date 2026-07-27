@@ -57,6 +57,12 @@ class TheSportsDBProvider(FootballProvider):
             {"id": competition_id, "s": settings.thesportsdb_season},
         )
         events = data.get("events") or []
+        if str(competition_id) == "4330":
+            events = self._merge_events(
+                events,
+                await self._fetch_scottish_premiership_team_events(competition_id),
+            )
+            data = {**data, "events": events}
         team_ids = {event.get("idHomeTeam") for event in events if event.get("idHomeTeam")}
         team_ids.update(event.get("idAwayTeam") for event in events if event.get("idAwayTeam"))
         teams = await self._fetch_teams(team_ids)
@@ -118,6 +124,49 @@ class TheSportsDBProvider(FootballProvider):
                     bool(team.get("strLogo")),
                 )
         return list(teams_by_name.values())
+
+    async def _fetch_scottish_premiership_team_events(self, competition_id: str) -> list[dict]:
+        team_events: list[dict] = []
+        for team in await self.fetch_teams(competition_id):
+            if not team.external_id:
+                continue
+            for endpoint in ("eventsnext.php", "eventslast.php"):
+                data = await self._get_json(endpoint, {"id": team.external_id})
+                for event in data.get("events") or []:
+                    if self._is_competition_event(event, competition_id):
+                        team_events.append(event)
+        logger.info(
+            "TheSportsDB supplemental team events league=%s events=%s",
+            competition_id,
+            len(team_events),
+        )
+        return team_events
+
+    def _is_competition_event(self, event: dict, competition_id: str) -> bool:
+        if str(event.get("idLeague")) != str(competition_id):
+            return False
+        season = event.get("strSeason")
+        return season in (None, "", settings.thesportsdb_season)
+
+    def _merge_events(self, primary_events: list[dict], supplemental_events: list[dict]) -> list[dict]:
+        events_by_id: dict[str, dict] = {}
+        for event in primary_events + supplemental_events:
+            event_id = event.get("idEvent")
+            if not event_id:
+                continue
+            if event_id not in events_by_id:
+                events_by_id[event_id] = event
+                continue
+            events_by_id[event_id] = {
+                **events_by_id[event_id],
+                **{key: value for key, value in event.items() if value not in (None, "")},
+            }
+        return sorted(events_by_id.values(), key=lambda event: (
+            event.get("strTimestamp") or "",
+            event.get("dateEvent") or "",
+            event.get("strTime") or "",
+            event.get("idEvent") or "",
+        ))
 
     async def _fetch_teams(self, team_ids: set[str]) -> dict[str, dict]:
         teams: dict[str, dict] = {}

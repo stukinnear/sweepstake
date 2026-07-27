@@ -126,12 +126,38 @@ async def test_import_thesportsdb_provider_normalizes_scottish_premiership(clien
             return FakeResponse({"teams": [{"idTeam": "201", "strTeam": "Heart of Midlothian", "strTeamShort": "HEA", "strBadge": "/images/media/team/badge/hearts.png"}]})
         if url.endswith("lookupteam.php") and params == {"id": "202"}:
             return FakeResponse({"teams": [{"idTeam": "202", "strTeam": "Hibernian", "strTeamShort": "HIB", "strBadge": None}]})
+        if url.endswith("lookupteam.php") and params == {"id": "203"}:
+            return FakeResponse({"teams": [{"idTeam": "203", "strTeam": "Celtic", "strTeamShort": "CEL", "strBadge": "https://example.com/celtic.png"}]})
+        if url.endswith("lookupteam.php") and params == {"id": "204"}:
+            return FakeResponse({"teams": [{"idTeam": "204", "strTeam": "Dundee", "strTeamShort": "DUN", "strBadge": "https://example.com/dundee.png"}]})
         if url.endswith("searchteams.php") and params == {"t": "Hibs"}:
             return FakeResponse({"teams": [{"idTeam": "202", "strTeam": "Hibernian", "strTeamShort": "HIB", "strBadge": "https://example.com/hibs.png"}]})
         if url.endswith("searchteams.php") and params == {"t": "Celtic"}:
             return FakeResponse({"teams": [{"idTeam": "203", "strTeam": "Celtic", "strTeamShort": "CEL", "strBadge": "https://example.com/celtic.png"}]})
         if url.endswith("searchteams.php") and params == {"t": "Dundee"}:
             return FakeResponse({"teams": [{"idTeam": "204", "strTeam": "Dundee", "strTeamShort": "DUN", "strBadge": "https://example.com/dundee.png"}]})
+        if url.endswith(("eventsnext.php", "eventslast.php")):
+            if params in ({"id": "203"}, {"id": "204"}):
+                return FakeResponse({
+                    "events": [
+                        {
+                            "idEvent": "9002",
+                            "idLeague": "4330",
+                            "strLeague": "Scottish Premiership",
+                            "strSeason": "2026-2027",
+                            "strTimestamp": "2026-08-03T18:30:00+00:00",
+                            "strStatus": "NS",
+                            "intRound": "1",
+                            "idHomeTeam": "203",
+                            "idAwayTeam": "204",
+                            "strHomeTeam": "Celtic",
+                            "strAwayTeam": "Dundee",
+                            "intHomeScore": None,
+                            "intAwayScore": None,
+                        },
+                    ]
+                })
+            return FakeResponse({"events": []})
         raise AssertionError(f"Unexpected URL {url} params={params}")
 
     monkeypatch.setattr("src.providers.thesportsdb.requests.get", fake_get)
@@ -160,12 +186,15 @@ async def test_import_thesportsdb_provider_normalizes_scottish_premiership(clien
     assert any(team["image_url"] == "https://example.com/dundee.png" for team in teams)
 
     matches = (await client_user_1.get(f"/match?tournament_id={tournament['id']}")).json()
-    assert len(matches) == 1
+    assert len(matches) == 2
     assert matches[0]["external_provider"] == "thesportsdb"
     assert matches[0]["external_id"] == "9001"
     assert matches[0]["home_goals"] == 3
     assert matches[0]["away_goals"] == 2
     assert matches[0]["stage_name"] is None
+    assert matches[1]["external_id"] == "9002"
+    assert matches[1]["home_team"]["name"] == "Celtic"
+    assert matches[1]["away_team"]["name"] == "Dundee"
 
 
 async def test_provider_diagnostics_reports_counts_and_warnings(client_user_1: AsyncClient):
