@@ -141,7 +141,7 @@ export function TournamentPage() {
   const imageForTeam = (team: Match['home_team']) =>
     team?.image_url ?? (team?.id ? teamById.get(team.id)?.image_url : null)
   const rules: { label: string; points: number | null }[] = [
-    { label: '🥇 Correct tournament winner', points: tournament.first_place_points },
+    { label: '🥇 Correct league winner', points: tournament.first_place_points },
     { label: '🥈 Correct runner-up', points: tournament.second_place_points },
     { label: '🥉 Correct third place', points: tournament.third_place_points },
     { label: '👥 Correct group winner', points: tournament.group_winner_points },

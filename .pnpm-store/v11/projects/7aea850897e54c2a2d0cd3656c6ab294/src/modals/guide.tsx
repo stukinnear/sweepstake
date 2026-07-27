@@ -215,7 +215,7 @@ function ScoringRulesBody({ tournamentId }: { tournamentId: number | null }) {
 
   const showGroupStage = tournament.competition_format !== 'league'
   const rules: { label: string; points: number | null }[] = [
-    { label: '🥇 Correct tournament winner', points: tournament.first_place_points },
+    { label: '🥇 Correct league winner', points: tournament.first_place_points },
     { label: '🥈 Correct runner-up', points: tournament.second_place_points },
     { label: '🥉 Correct third place', points: tournament.third_place_points },
     { label: '👥 Correct group winner', points: tournament.group_winner_points },

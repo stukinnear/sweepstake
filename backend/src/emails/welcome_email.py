@@ -94,7 +94,7 @@ def _build_text_body(
         ]
     lines += ["COMPETITION RULES & SCORING", "-" * 40, "Points awarded per correct prediction:", ""]
     for label, pts in [
-        ("Correct tournament winner", first_place_points),
+        ("Correct league winner", first_place_points),
         ("Correct runner-up", second_place_points),
         ("Correct third place", third_place_points),
         ("Correct group winner", group_winner_points if has_group_stage_predictions else None),
