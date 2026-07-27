@@ -492,7 +492,10 @@ export function PredictionsPage() {
   const predictionMap = new Map((matchPredictions ?? []).map((p) => [p.match_id, p]))
   const groupPredMap = new Map(groupPredictions.map((p) => [p.group_id, p]))
   const stagePredMap = new Map(stagePredictions.map((p) => [p.stage_id, p]))
-  const tournamentWinnerTeamId = tournamentPredictions?.[0]?.winner_team_id ?? null
+  const tournamentPrediction = tournamentPredictions?.[0]
+  const tournamentWinnerTeamId = tournamentPrediction?.winner_team_id ?? null
+  const tournamentSecondPlaceTeamId = tournamentPrediction?.second_place_team_id ?? null
+  const tournamentThirdPlaceTeamId = tournamentPrediction?.third_place_team_id ?? null
 
   if (tLoading) {
     return (
@@ -597,36 +600,90 @@ export function PredictionsPage() {
           viewingUserName={viewingUser?.user_name ?? undefined}
         />
 
-        {/* Tournament winner */}
+        {/* League placings */}
         {showTournamentSection && (
           <section>
-            <h2 className="text-lg font-semibold mb-3">🏆 Tournament Winner</h2>
-            <TeamSelect
-              label="Who will win the tournament?"
-              featured
-              teams={teams}
-              currentTeamId={tournamentWinnerTeamId}
-              isOwn={isEditable}
-              disabled={tournamentDisabled}
-              pointsEarned={tournamentPredictions?.[0]?.points_earned ?? null}
-              startDate={tournament.start_date}
-              winnerTeam={tournament.first_place}
-              secondPlace={tournament.second_place}
-              thirdPlace={tournament.third_place}
-              onSelect={(teamId) => {
-                if (adminEditingOther && !confirmAdminEdit()) return
-                upsertTournamentPred({
-                  tournament_id: tournamentId,
-                  winner_team_id: teamId ?? undefined,
-                  ...(adminEditingOther ? { userId: targetUserId } : {}),
-                })
-              }}
-              onStatsClick={
-                tournament.start_date != null && tournament.start_date <= today
-                  ? () => openStats('tournament', tournamentId)
-                  : undefined
-              }
-            />
+            <h2 className="text-lg font-semibold mb-3">League Placings</h2>
+            <div className="space-y-3">
+              {!!tournament.first_place_points && (
+                <TeamSelect
+                  label="Who will win the league?"
+                  featured
+                  teams={teams}
+                  currentTeamId={tournamentWinnerTeamId}
+                  isOwn={isEditable}
+                  disabled={tournamentDisabled}
+                  pointsEarned={tournamentPrediction?.points_earned ?? null}
+                  startDate={tournament.start_date}
+                  winnerTeam={tournament.first_place}
+                  secondPlace={tournament.second_place}
+                  thirdPlace={tournament.third_place}
+                  onSelect={(teamId) => {
+                    if (adminEditingOther && !confirmAdminEdit()) return
+                    upsertTournamentPred({
+                      tournament_id: tournamentId,
+                      winner_team_id: teamId,
+                      ...(adminEditingOther ? { userId: targetUserId } : {}),
+                    })
+                  }}
+                  onStatsClick={
+                    tournament.start_date != null && tournament.start_date <= today
+                      ? () => openStats('tournament', tournamentId)
+                      : undefined
+                  }
+                />
+              )}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {!!tournament.second_place_points && (
+                  <TeamSelect
+                    label="Who will finish runner-up?"
+                    teams={teams}
+                    currentTeamId={tournamentSecondPlaceTeamId}
+                    isOwn={isEditable}
+                    disabled={tournamentDisabled}
+                    startDate={tournament.start_date}
+                    winnerTeam={tournament.second_place}
+                    onSelect={(teamId) => {
+                      if (adminEditingOther && !confirmAdminEdit()) return
+                      upsertTournamentPred({
+                        tournament_id: tournamentId,
+                        second_place_team_id: teamId,
+                        ...(adminEditingOther ? { userId: targetUserId } : {}),
+                      })
+                    }}
+                    onStatsClick={
+                      tournament.start_date != null && tournament.start_date <= today
+                        ? () => openStats('tournament', tournamentId)
+                        : undefined
+                    }
+                  />
+                )}
+                {!!tournament.third_place_points && (
+                  <TeamSelect
+                    label="Who will finish third?"
+                    teams={teams}
+                    currentTeamId={tournamentThirdPlaceTeamId}
+                    isOwn={isEditable}
+                    disabled={tournamentDisabled}
+                    startDate={tournament.start_date}
+                    winnerTeam={tournament.third_place}
+                    onSelect={(teamId) => {
+                      if (adminEditingOther && !confirmAdminEdit()) return
+                      upsertTournamentPred({
+                        tournament_id: tournamentId,
+                        third_place_team_id: teamId,
+                        ...(adminEditingOther ? { userId: targetUserId } : {}),
+                      })
+                    }}
+                    onStatsClick={
+                      tournament.start_date != null && tournament.start_date <= today
+                        ? () => openStats('tournament', tournamentId)
+                        : undefined
+                    }
+                  />
+                )}
+              </div>
+            </div>
           </section>
         )}
 

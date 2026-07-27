@@ -24,6 +24,14 @@ class PredictTournament(SQLModel, table=True):
         default=None,
         sa_column=sa.Column(sa.Integer, sa.ForeignKey("team.id", ondelete="SET NULL"), nullable=True)
     )
+    second_place_team_id: Optional[int] = Field(
+        default=None,
+        sa_column=sa.Column(sa.Integer, sa.ForeignKey("team.id", ondelete="SET NULL"), nullable=True)
+    )
+    third_place_team_id: Optional[int] = Field(
+        default=None,
+        sa_column=sa.Column(sa.Integer, sa.ForeignKey("team.id", ondelete="SET NULL"), nullable=True)
+    )
 
     points_earned: Optional[int] = Field(
         default=None,
@@ -37,12 +45,28 @@ class PredictTournament(SQLModel, table=True):
             "lazy": "selectin",
         }
     )
+    second_place_team: Optional[Team] = Relationship(
+        sa_relationship_kwargs={
+            "primaryjoin": "PredictTournament.second_place_team_id == Team.id",
+            "foreign_keys": "[PredictTournament.second_place_team_id]",
+            "lazy": "selectin",
+        }
+    )
+    third_place_team: Optional[Team] = Relationship(
+        sa_relationship_kwargs={
+            "primaryjoin": "PredictTournament.third_place_team_id == Team.id",
+            "foreign_keys": "[PredictTournament.third_place_team_id]",
+            "lazy": "selectin",
+        }
+    )
 
 
 class PredictTournamentCreate(SQLModel):
     """Body for POST /predict/tournament — creates or updates the current user's prediction."""
     tournament_id: int
     winner_team_id: Optional[int] = None
+    second_place_team_id: Optional[int] = None
+    third_place_team_id: Optional[int] = None
 
 
 class PredictTournamentRead(SQLModel):
@@ -53,6 +77,10 @@ class PredictTournamentRead(SQLModel):
     user_id: int
     winner_team_id: Optional[int] = None
     winner_team: Optional[TeamRead] = None
+    second_place_team_id: Optional[int] = None
+    second_place_team: Optional[TeamRead] = None
+    third_place_team_id: Optional[int] = None
+    third_place_team: Optional[TeamRead] = None
     points_earned: Optional[int] = None
 
 

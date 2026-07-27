@@ -58,10 +58,12 @@ async def upsert_predict_tournament_endpoint(
     token_payload: dict = Depends(verify_access_token),
 ):
     """
-    Create or update a tournament winner prediction.
+    Create or update league placement predictions.
 
     - **tournament_id**: ID of the tournament to predict
-    - **winner_team_id**: Optional team ID predicted to win the tournament
+    - **winner_team_id**: Optional team ID predicted to win the league
+    - **second_place_team_id**: Optional team ID predicted to finish second
+    - **third_place_team_id**: Optional team ID predicted to finish third
     - **user_id**: Optional target user ID (admin only; defaults to the token user)
 
     Returns the created or updated prediction.
@@ -96,7 +98,7 @@ async def get_predict_tournaments_endpoint(
     token_payload: dict = Depends(verify_access_token),
 ):
     """
-    Retrieve tournament winner predictions for a tournament.
+    Retrieve league placement predictions for a tournament.
 
     - **tournament_id**: The tournament to retrieve predictions for (required)
     - **user_id**: Optionally filter by a specific user (defaults to the token user)

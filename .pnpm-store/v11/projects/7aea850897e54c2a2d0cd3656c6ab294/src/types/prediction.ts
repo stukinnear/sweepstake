@@ -6,12 +6,18 @@ export interface TournamentPrediction {
   user_id: number
   winner_team_id: number | null
   winner_team: TeamRead | null
+  second_place_team_id: number | null
+  second_place_team: TeamRead | null
+  third_place_team_id: number | null
+  third_place_team: TeamRead | null
   points_earned: number | null
 }
 
 export interface TournamentPredictionUpsert {
   tournament_id: number
-  winner_team_id?: number
+  winner_team_id?: number | null
+  second_place_team_id?: number | null
+  third_place_team_id?: number | null
 }
 
 // Group predictions

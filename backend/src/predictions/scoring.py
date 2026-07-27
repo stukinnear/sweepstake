@@ -29,10 +29,10 @@ async def recalculate_tournament_points(db: AsyncSession, tournament_id: int) ->
     """Recalculate points_earned for every PredictTournament row in a tournament.
 
     Rules:
-    - winner_team_id == first_place_team_id  → first_place_points
-    - winner_team_id == second_place_team_id → second_place_points
-    - winner_team_id == third_place_team_id  → third_place_points  (only when third_place_points is set)
-    - any other prediction                   → 0
+    - predicted winner matches actual first place -> first_place_points
+    - predicted runner-up matches actual second place -> second_place_points
+    - predicted third place matches actual third place -> third_place_points
+    - any other prediction -> 0
     - If first_place_team_id, second_place_team_id, and third_place_team_id are all NULL
       the results are not yet known; set points_earned to NULL.
     """
@@ -59,19 +59,24 @@ async def recalculate_tournament_points(db: AsyncSession, tournament_id: int) ->
         for prediction in predictions:
             if not results_known:
                 prediction.points_earned = None
-            elif prediction.winner_team_id is None:
-                prediction.points_earned = 0
-            elif prediction.winner_team_id == tournament.first_place_team_id:
-                prediction.points_earned = tournament.first_place_points or 0
-            elif prediction.winner_team_id == tournament.second_place_team_id:
-                prediction.points_earned = tournament.second_place_points or 0
-            elif (
-                tournament.third_place_team_id is not None
-                and prediction.winner_team_id == tournament.third_place_team_id
-            ):
-                prediction.points_earned = tournament.third_place_points or 0
             else:
-                prediction.points_earned = 0
+                points = 0
+                if (
+                    tournament.first_place_team_id is not None
+                    and prediction.winner_team_id == tournament.first_place_team_id
+                ):
+                    points += tournament.first_place_points or 0
+                if (
+                    tournament.second_place_team_id is not None
+                    and prediction.second_place_team_id == tournament.second_place_team_id
+                ):
+                    points += tournament.second_place_points or 0
+                if (
+                    tournament.third_place_team_id is not None
+                    and prediction.third_place_team_id == tournament.third_place_team_id
+                ):
+                    points += tournament.third_place_points or 0
+                prediction.points_earned = points
 
         await db.flush()
         logger.info(f"Recalculated tournament prediction points for tournament_id=%s", tournament_id)

@@ -753,6 +753,9 @@ async def test_scoring_tournament_correct_first_place(client_user_1: AsyncClient
     pred = await client_user_1.post("/predict/tournament", json={"tournament_id": tournament_id, "winner_team_id": team_a_id})
     assert pred.status_code == 201
     assert pred.json()["points_earned"] is None  # result not yet known
+    assert pred.json()["winner_team_id"] == team_a_id
+    assert pred.json()["second_place_team_id"] is None
+    assert pred.json()["third_place_team_id"] is None
 
     patch = await client_user_1.patch(
         f"/tournament/{tournament_id}",
@@ -770,8 +773,11 @@ async def test_scoring_tournament_correct_second_place(client_user_1: AsyncClien
     """Predicting the second-place team earns second_place_points."""
     tournament_id, team_a_id, team_b_id, _ = await _setup_tournament_with_teams(client_user_1)
 
-    pred = await client_user_1.post("/predict/tournament", json={"tournament_id": tournament_id, "winner_team_id": team_b_id})
+    pred = await client_user_1.post("/predict/tournament", json={"tournament_id": tournament_id, "second_place_team_id": team_b_id})
     assert pred.status_code == 201
+    assert pred.json()["winner_team_id"] is None
+    assert pred.json()["second_place_team_id"] == team_b_id
+    assert pred.json()["second_place_team"]["id"] == team_b_id
 
     await client_user_1.patch(
         f"/tournament/{tournament_id}",
@@ -788,8 +794,11 @@ async def test_scoring_tournament_correct_third_place(client_user_1: AsyncClient
     """Predicting the third-place team earns third_place_points."""
     tournament_id, team_a_id, team_b_id, team_c_id = await _setup_tournament_with_teams(client_user_1)
 
-    pred = await client_user_1.post("/predict/tournament", json={"tournament_id": tournament_id, "winner_team_id": team_c_id})
+    pred = await client_user_1.post("/predict/tournament", json={"tournament_id": tournament_id, "third_place_team_id": team_c_id})
     assert pred.status_code == 201
+    assert pred.json()["winner_team_id"] is None
+    assert pred.json()["third_place_team_id"] == team_c_id
+    assert pred.json()["third_place_team"]["id"] == team_c_id
 
     await client_user_1.patch(
         f"/tournament/{tournament_id}",
@@ -799,6 +808,41 @@ async def test_scoring_tournament_correct_third_place(client_user_1: AsyncClient
     resp = await client_user_1.get(f"/predict/tournament/{tournament_id}")
     assert resp.status_code == 200
     assert resp.json()[0]["points_earned"] == 8
+
+
+@pytest.mark.asyncio
+async def test_scoring_tournament_correct_all_placements(client_user_1: AsyncClient):
+    """Correct first, second, and third-place predictions add together."""
+    tournament_id, team_a_id, team_b_id, team_c_id = await _setup_tournament_with_teams(client_user_1)
+
+    pred = await client_user_1.post(
+        "/predict/tournament",
+        json={
+            "tournament_id": tournament_id,
+            "winner_team_id": team_a_id,
+            "second_place_team_id": team_b_id,
+            "third_place_team_id": team_c_id,
+        },
+    )
+    assert pred.status_code == 201
+
+    await client_user_1.patch(
+        f"/tournament/{tournament_id}",
+        json={
+            "first_place_team_id": team_a_id,
+            "second_place_team_id": team_b_id,
+            "third_place_team_id": team_c_id,
+            "third_place_points": 8,
+        },
+    )
+
+    resp = await client_user_1.get(f"/predict/tournament/{tournament_id}")
+    assert resp.status_code == 200
+    data = resp.json()[0]
+    assert data["winner_team_id"] == team_a_id
+    assert data["second_place_team_id"] == team_b_id
+    assert data["third_place_team_id"] == team_c_id
+    assert data["points_earned"] == 48
 
 
 @pytest.mark.asyncio

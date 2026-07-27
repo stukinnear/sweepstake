@@ -73,7 +73,9 @@ async def get_tournament_predictions_open(db: AsyncSession, tournament_id: int) 
 
 def _query_predict_tournament():
     return select(models.PredictTournament).options(
-        selectinload(models.PredictTournament.winner_team)
+        selectinload(models.PredictTournament.winner_team),
+        selectinload(models.PredictTournament.second_place_team),
+        selectinload(models.PredictTournament.third_place_team),
     )
 
 
@@ -83,12 +85,16 @@ async def upsert_predict_tournament(
     """Create or update the current user's tournament prediction."""
     existing = await db.get(models.PredictTournament, (data.tournament_id, user_id))
     if existing:
-        existing.winner_team_id = data.winner_team_id
+        for field in ("winner_team_id", "second_place_team_id", "third_place_team_id"):
+            if field in data.model_fields_set:
+                setattr(existing, field, getattr(data, field))
     else:
         existing = models.PredictTournament(
             tournament_id=data.tournament_id,
             user_id=user_id,
             winner_team_id=data.winner_team_id,
+            second_place_team_id=data.second_place_team_id,
+            third_place_team_id=data.third_place_team_id,
         )
         db.add(existing)
     await db.commit()
