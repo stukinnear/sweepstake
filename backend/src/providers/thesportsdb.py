@@ -57,10 +57,12 @@ class TheSportsDBProvider(FootballProvider):
             {"id": competition_id, "s": settings.thesportsdb_season},
         )
         events = data.get("events") or []
+        provider_teams: list[ProviderTeam] | None = None
         if str(competition_id) == "4330":
+            provider_teams = await self.fetch_teams(competition_id)
             events = self._merge_events(
                 events,
-                await self._fetch_scottish_premiership_team_events(competition_id),
+                await self._fetch_scottish_premiership_team_events(competition_id, events, provider_teams),
             )
             data = {**data, "events": events}
         team_ids = {event.get("idHomeTeam") for event in events if event.get("idHomeTeam")}
@@ -125,19 +127,44 @@ class TheSportsDBProvider(FootballProvider):
                 )
         return list(teams_by_name.values())
 
-    async def _fetch_scottish_premiership_team_events(self, competition_id: str) -> list[dict]:
+    async def _fetch_scottish_premiership_team_events(
+        self,
+        competition_id: str,
+        season_events: list[dict],
+        provider_teams: list[ProviderTeam],
+    ) -> list[dict]:
+        event_team_ids = {
+            team_id
+            for event in season_events
+            for team_id in (event.get("idHomeTeam"), event.get("idAwayTeam"))
+            if team_id
+        }
         team_events: list[dict] = []
-        for team in await self.fetch_teams(competition_id):
+        missing_teams = [
+            team for team in provider_teams
+            if team.external_id and team.external_id not in event_team_ids
+        ]
+        for team in missing_teams:
             if not team.external_id:
                 continue
-            for endpoint in ("eventsnext.php", "eventslast.php"):
-                data = await self._get_json(endpoint, {"id": team.external_id})
-                for event in data.get("events") or []:
-                    if self._is_competition_event(event, competition_id):
-                        team_events.append(event)
+            try:
+                data = await self._get_json("eventsnext.php", {"id": team.external_id})
+            except requests.HTTPError as exc:
+                logger.warning(
+                    "TheSportsDB supplemental team events skipped team_id=%s name=%r error=%s",
+                    team.external_id,
+                    team.name,
+                    exc,
+                )
+                continue
+            for event in data.get("events") or []:
+                if self._is_competition_event(event, competition_id):
+                    team_events.append(event)
+            await asyncio.sleep(0.2)
         logger.info(
-            "TheSportsDB supplemental team events league=%s events=%s",
+            "TheSportsDB supplemental team events league=%s missing_teams=%s events=%s",
             competition_id,
+            len(missing_teams),
             len(team_events),
         )
         return team_events

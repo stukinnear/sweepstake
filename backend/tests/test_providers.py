@@ -136,7 +136,7 @@ async def test_import_thesportsdb_provider_normalizes_scottish_premiership(clien
             return FakeResponse({"teams": [{"idTeam": "203", "strTeam": "Celtic", "strTeamShort": "CEL", "strBadge": "https://example.com/celtic.png"}]})
         if url.endswith("searchteams.php") and params == {"t": "Dundee"}:
             return FakeResponse({"teams": [{"idTeam": "204", "strTeam": "Dundee", "strTeamShort": "DUN", "strBadge": "https://example.com/dundee.png"}]})
-        if url.endswith(("eventsnext.php", "eventslast.php")):
+        if url.endswith("eventsnext.php"):
             if params in ({"id": "203"}, {"id": "204"}):
                 return FakeResponse({
                     "events": [
