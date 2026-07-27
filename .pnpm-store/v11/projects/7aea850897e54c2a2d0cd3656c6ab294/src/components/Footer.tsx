@@ -26,7 +26,7 @@ export function Footer() {
           Your Data
         </button>
         <a
-          href="https://github.com/vanalmsick/sweepstake"
+          href="https://github.com/stukinnear/sweepstake"
           target="_blank"
           rel="noopener"
           className="hover:text-white transition-colors"
@@ -41,7 +41,16 @@ export function Footer() {
             <ul className="space-y-3 text-sm text-gray-700 dark:text-gray-300 list-disc list-inside">
               <li>
                 This is an Open Source project under the{' '}
-                <strong>SSPL v1.0 license</strong> on{' '}
+                <strong>SSPL v1.0 license</strong>. This SPFL version is on{' '}
+                <a
+                  href="https://github.com/stukinnear/sweepstake"
+                  target="_blank"
+                  rel="noopener"
+                  className="text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  github.com/stukinnear/sweepstake
+                </a>
+                {' '}and is forked from{' '}
                 <a
                   href="https://github.com/vanalmsick/sweepstake"
                   target="_blank"
