@@ -138,6 +138,28 @@ async def test_import_thesportsdb_provider_normalizes_scottish_premiership(clien
             return FakeResponse({"teams": [{"idTeam": "203", "strTeam": "Celtic", "strTeamShort": "CEL", "strBadge": "https://example.com/celtic.png"}]})
         if url.endswith("searchteams.php") and params == {"t": "Dundee"}:
             return FakeResponse({"teams": [{"idTeam": "204", "strTeam": "Dundee", "strTeamShort": "DUN", "strBadge": "https://example.com/dundee.png"}]})
+        if url.endswith("eventsnextleague.php") and params == {"id": "4330"}:
+            return FakeResponse({
+                "events": [
+                    {
+                        "idEvent": "9004",
+                        "idLeague": "4330",
+                        "strLeague": "Scottish Premiership",
+                        "strSeason": "2026-2027",
+                        "strTimestamp": "2026-08-09T14:00:00+00:00",
+                        "strStatus": "NS",
+                        "intRound": "2",
+                        "idHomeTeam": "205",
+                        "idAwayTeam": "202",
+                        "strHomeTeam": "Aberdeen",
+                        "strAwayTeam": "Hibernian",
+                        "intHomeScore": None,
+                        "intAwayScore": None,
+                    },
+                ]
+            })
+        if url.endswith("eventspastleague.php") and params == {"id": "4330"}:
+            return FakeResponse({"events": []})
         if url.endswith("eventsnext.php"):
             if params == {"id": "201"}:
                 return FakeResponse({
@@ -208,7 +230,7 @@ async def test_import_thesportsdb_provider_normalizes_scottish_premiership(clien
     assert any(team["image_url"] == "https://example.com/dundee.png" for team in teams)
 
     matches = (await client_user_1.get(f"/match?tournament_id={tournament['id']}")).json()
-    assert len(matches) == 3
+    assert len(matches) == 4
     assert matches[0]["external_provider"] == "thesportsdb"
     assert matches[0]["external_id"] == "9001"
     assert matches[0]["home_goals"] == 3
@@ -220,6 +242,9 @@ async def test_import_thesportsdb_provider_normalizes_scottish_premiership(clien
     assert matches[2]["external_id"] == "9003"
     assert matches[2]["home_team"]["name"] == "Heart of Midlothian"
     assert matches[2]["away_team"]["name"] == "Aberdeen"
+    assert matches[3]["external_id"] == "9004"
+    assert matches[3]["home_team"]["name"] == "Aberdeen"
+    assert matches[3]["away_team"]["name"] == "Hibernian"
 
 
 async def test_provider_diagnostics_reports_counts_and_warnings(client_user_1: AsyncClient):

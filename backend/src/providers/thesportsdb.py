@@ -62,7 +62,7 @@ class TheSportsDBProvider(FootballProvider):
             provider_teams = await self.fetch_teams(competition_id)
             events = self._merge_events(
                 events,
-                await self._fetch_scottish_premiership_team_events(competition_id, events, provider_teams),
+                await self._fetch_scottish_premiership_supplemental_events(competition_id, events, provider_teams),
             )
             data = {**data, "events": events}
         team_ids = {event.get("idHomeTeam") for event in events if event.get("idHomeTeam")}
@@ -126,6 +126,41 @@ class TheSportsDBProvider(FootballProvider):
                     bool(team.get("strLogo")),
                 )
         return list(teams_by_name.values())
+
+    async def _fetch_scottish_premiership_supplemental_events(
+        self,
+        competition_id: str,
+        season_events: list[dict],
+        provider_teams: list[ProviderTeam],
+    ) -> list[dict]:
+        supplemental_events = []
+        supplemental_events.extend(await self._fetch_scottish_premiership_league_events(competition_id))
+        supplemental_events.extend(await self._fetch_scottish_premiership_team_events(competition_id, season_events, provider_teams))
+        return self._merge_events([], supplemental_events)
+
+    async def _fetch_scottish_premiership_league_events(self, competition_id: str) -> list[dict]:
+        league_events: list[dict] = []
+        for endpoint in ("eventsnextleague.php", "eventspastleague.php"):
+            try:
+                data = await self._get_json(endpoint, {"id": competition_id})
+            except requests.HTTPError as exc:
+                logger.warning(
+                    "TheSportsDB supplemental league events skipped endpoint=%s league=%s error=%s",
+                    endpoint,
+                    competition_id,
+                    exc,
+                )
+                continue
+            for event in data.get("events") or []:
+                if self._is_competition_event(event, competition_id):
+                    league_events.append(event)
+            await asyncio.sleep(0.2)
+        logger.info(
+            "TheSportsDB supplemental league events league=%s events=%s",
+            competition_id,
+            len(league_events),
+        )
+        return league_events
 
     async def _fetch_scottish_premiership_team_events(
         self,
