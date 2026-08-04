@@ -130,6 +130,8 @@ async def test_import_thesportsdb_provider_normalizes_scottish_premiership(clien
             return FakeResponse({"teams": [{"idTeam": "203", "strTeam": "Celtic", "strTeamShort": "CEL", "strBadge": "https://example.com/celtic.png"}]})
         if url.endswith("lookupteam.php") and params == {"id": "204"}:
             return FakeResponse({"teams": [{"idTeam": "204", "strTeam": "Dundee", "strTeamShort": "DUN", "strBadge": "https://example.com/dundee.png"}]})
+        if url.endswith("lookupteam.php") and params == {"id": "205"}:
+            return FakeResponse({"teams": [{"idTeam": "205", "strTeam": "Aberdeen", "strTeamShort": "ABE", "strBadge": "https://example.com/aberdeen.png"}]})
         if url.endswith("searchteams.php") and params == {"t": "Hibs"}:
             return FakeResponse({"teams": [{"idTeam": "202", "strTeam": "Hibernian", "strTeamShort": "HIB", "strBadge": "https://example.com/hibs.png"}]})
         if url.endswith("searchteams.php") and params == {"t": "Celtic"}:
@@ -137,6 +139,26 @@ async def test_import_thesportsdb_provider_normalizes_scottish_premiership(clien
         if url.endswith("searchteams.php") and params == {"t": "Dundee"}:
             return FakeResponse({"teams": [{"idTeam": "204", "strTeam": "Dundee", "strTeamShort": "DUN", "strBadge": "https://example.com/dundee.png"}]})
         if url.endswith("eventsnext.php"):
+            if params == {"id": "201"}:
+                return FakeResponse({
+                    "events": [
+                        {
+                            "idEvent": "9003",
+                            "idLeague": "4330",
+                            "strLeague": "Scottish Premiership",
+                            "strSeason": "2026-2027",
+                            "strTimestamp": "2026-08-08T14:00:00+00:00",
+                            "strStatus": "NS",
+                            "intRound": "2",
+                            "idHomeTeam": "201",
+                            "idAwayTeam": "205",
+                            "strHomeTeam": "Heart of Midlothian",
+                            "strAwayTeam": "Aberdeen",
+                            "intHomeScore": None,
+                            "intAwayScore": None,
+                        },
+                    ]
+                })
             if params in ({"id": "203"}, {"id": "204"}):
                 return FakeResponse({
                     "events": [
@@ -186,7 +208,7 @@ async def test_import_thesportsdb_provider_normalizes_scottish_premiership(clien
     assert any(team["image_url"] == "https://example.com/dundee.png" for team in teams)
 
     matches = (await client_user_1.get(f"/match?tournament_id={tournament['id']}")).json()
-    assert len(matches) == 2
+    assert len(matches) == 3
     assert matches[0]["external_provider"] == "thesportsdb"
     assert matches[0]["external_id"] == "9001"
     assert matches[0]["home_goals"] == 3
@@ -195,6 +217,9 @@ async def test_import_thesportsdb_provider_normalizes_scottish_premiership(clien
     assert matches[1]["external_id"] == "9002"
     assert matches[1]["home_team"]["name"] == "Celtic"
     assert matches[1]["away_team"]["name"] == "Dundee"
+    assert matches[2]["external_id"] == "9003"
+    assert matches[2]["home_team"]["name"] == "Heart of Midlothian"
+    assert matches[2]["away_team"]["name"] == "Aberdeen"
 
 
 async def test_provider_diagnostics_reports_counts_and_warnings(client_user_1: AsyncClient):

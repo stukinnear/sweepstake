@@ -130,21 +130,15 @@ class TheSportsDBProvider(FootballProvider):
     async def _fetch_scottish_premiership_team_events(
         self,
         competition_id: str,
-        season_events: list[dict],
+        _season_events: list[dict],
         provider_teams: list[ProviderTeam],
     ) -> list[dict]:
-        event_team_ids = {
-            team_id
-            for event in season_events
-            for team_id in (event.get("idHomeTeam"), event.get("idAwayTeam"))
-            if team_id
-        }
         team_events: list[dict] = []
-        missing_teams = [
+        teams_to_check = [
             team for team in provider_teams
-            if team.external_id and team.external_id not in event_team_ids
+            if team.external_id
         ]
-        for team in missing_teams:
+        for team in teams_to_check:
             if not team.external_id:
                 continue
             try:
@@ -162,9 +156,9 @@ class TheSportsDBProvider(FootballProvider):
                     team_events.append(event)
             await asyncio.sleep(0.2)
         logger.info(
-            "TheSportsDB supplemental team events league=%s missing_teams=%s events=%s",
+            "TheSportsDB supplemental team events league=%s checked_teams=%s events=%s",
             competition_id,
-            len(missing_teams),
+            len(teams_to_check),
             len(team_events),
         )
         return team_events
