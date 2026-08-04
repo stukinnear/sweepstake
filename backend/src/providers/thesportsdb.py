@@ -67,7 +67,7 @@ class TheSportsDBProvider(FootballProvider):
             data = {**data, "events": events}
         team_ids = {event.get("idHomeTeam") for event in events if event.get("idHomeTeam")}
         team_ids.update(event.get("idAwayTeam") for event in events if event.get("idAwayTeam"))
-        teams = await self._fetch_teams(team_ids)
+        teams = await self._fetch_teams(team_ids, self._provider_team_records(provider_teams or []))
         await self._fill_missing_teams_from_names(events, teams)
         return data, [self._normalize_match(event, teams) for event in events if event.get("idEvent")]
 
@@ -224,15 +224,34 @@ class TheSportsDBProvider(FootballProvider):
             event.get("idEvent") or "",
         ))
 
-    async def _fetch_teams(self, team_ids: set[str]) -> dict[str, dict]:
-        teams: dict[str, dict] = {}
+    def _provider_team_records(self, provider_teams: list[ProviderTeam]) -> dict[str, dict]:
+        records = {}
+        for team in provider_teams:
+            if not team.external_id:
+                continue
+            records[team.external_id] = {
+                "idTeam": team.external_id,
+                "strTeam": team.name,
+                "strTeamShort": team.iso_code,
+                "strBadge": team.image_url,
+            }
+        return records
+
+    async def _fetch_teams(self, team_ids: set[str], known_teams: dict[str, dict] | None = None) -> dict[str, dict]:
+        teams: dict[str, dict] = dict(known_teams or {})
         for team_id in team_ids:
+            if team_id in teams:
+                continue
             if team_id in self._team_cache:
                 team = self._team_cache[team_id]
                 if team:
                     teams[team_id] = team
                 continue
-            data = await self._get_json("lookupteam.php", {"id": team_id})
+            try:
+                data = await self._get_json("lookupteam.php", {"id": team_id})
+            except requests.HTTPError as exc:
+                logger.warning("TheSportsDB lookupteam skipped id=%s error=%s", team_id, exc)
+                continue
             team = (data.get("teams") or [None])[0]
             self._team_cache[team_id] = team
             if team:
@@ -254,7 +273,11 @@ class TheSportsDBProvider(FootballProvider):
                 existing_team = teams.get(team_id) if team_id else None
                 if not team_name or (existing_team and self._team_image(existing_team)):
                     continue
-                team = await self._search_team(team_name)
+                try:
+                    team = await self._search_team(team_name)
+                except requests.HTTPError as exc:
+                    logger.warning("TheSportsDB searchteams skipped name=%r error=%s", team_name, exc)
+                    continue
                 if not team:
                     logger.info("TheSportsDB searchteams name=%r found no team", team_name)
                     continue
