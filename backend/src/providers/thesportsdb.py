@@ -1,5 +1,5 @@
 import asyncio
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import requests
 from aiocache import cached
@@ -64,6 +64,7 @@ class TheSportsDBProvider(FootballProvider):
                 events,
                 await self._fetch_scottish_premiership_supplemental_events(competition_id, events, provider_teams),
             )
+            events = self._merge_events(events, await self._fetch_near_term_event_details(events))
             data = {**data, "events": events}
         team_ids = {event.get("idHomeTeam") for event in events if event.get("idHomeTeam")}
         team_ids.update(event.get("idAwayTeam") for event in events if event.get("idAwayTeam"))
@@ -223,6 +224,35 @@ class TheSportsDBProvider(FootballProvider):
             event.get("strTime") or "",
             event.get("idEvent") or "",
         ))
+
+    async def _fetch_near_term_event_details(self, events: list[dict]) -> list[dict]:
+        now = datetime.now(timezone.utc)
+        window_start = now - timedelta(days=2)
+        window_end = now + timedelta(days=14)
+        candidates = []
+        for event in events:
+            event_id = event.get("idEvent")
+            if not event_id or self._status(event) == "FINISHED":
+                continue
+            start_datetime = self._parse_datetime(event)
+            if window_start <= start_datetime <= window_end:
+                candidates.append((start_datetime, event_id))
+
+        detailed_events: list[dict] = []
+        for _start_datetime, event_id in sorted(candidates)[:12]:
+            try:
+                data = await self._get_json("lookupevent.php", {"id": event_id})
+            except requests.HTTPError as exc:
+                logger.warning("TheSportsDB lookupevent skipped id=%s error=%s", event_id, exc)
+                continue
+            event = (data.get("events") or [None])[0]
+            if event:
+                detailed_events.append(event)
+            await asyncio.sleep(0.1)
+
+        if detailed_events:
+            logger.info("TheSportsDB near-term event details checked events=%s", len(detailed_events))
+        return detailed_events
 
     def _provider_team_records(self, provider_teams: list[ProviderTeam]) -> dict[str, dict]:
         records = {}

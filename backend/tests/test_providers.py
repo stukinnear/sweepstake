@@ -1,6 +1,8 @@
 from httpx import AsyncClient
 import pytest
 
+from src.providers.thesportsdb import TheSportsDBProvider
+
 pytestmark = pytest.mark.asyncio
 
 
@@ -246,6 +248,17 @@ async def test_import_thesportsdb_provider_normalizes_scottish_premiership(clien
     assert matches[3]["home_team"]["name"] == "Aberdeen"
     assert matches[3]["away_team"]["name"] == "Hibernian"
     assert matches[3]["status"] == "POSTPONED"
+
+
+def test_thesportsdb_provider_normalizes_short_status_codes():
+    provider = TheSportsDBProvider()
+
+    assert provider._status({"strStatus": "PST"}) == "POSTPONED"
+    assert provider._status({"strStatus": "POST"}) == "POSTPONED"
+    assert provider._status({"strStatus": "CANC"}) == "CANCELLED"
+    assert provider._status({"strStatus": "SUSP"}) == "SUSPENDED"
+    assert provider._status({"strStatus": "ABD"}) == "CANCELLED"
+    assert provider._status({"strStatus": "FT"}) == "FINISHED"
 
 
 async def test_provider_diagnostics_reports_counts_and_warnings(client_user_1: AsyncClient):
