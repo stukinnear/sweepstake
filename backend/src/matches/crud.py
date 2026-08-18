@@ -78,7 +78,7 @@ async def update_match(
     if not db_match:
         return None
 
-    _SCORING_FIELDS = {"home_goals", "away_goals", "home_team_id", "away_team_id"}
+    _SCORING_FIELDS = {"home_goals", "away_goals", "home_team_id", "away_team_id", "status"}
 
     update_data = match_update.model_dump(exclude_unset=True)
     recalculate = bool(_SCORING_FIELDS & update_data.keys())

@@ -86,6 +86,7 @@ class FootballProvider(ABC):
                     away_team_id=self._team_id(provider_match.away_team, team_id_map),
                     stage_id=stage_id,
                     start_datetime=provider_match.start_datetime,
+                    status=provider_match.status,
                     home_goals=provider_match.home_goals,
                     away_goals=provider_match.away_goals,
                 )
@@ -135,7 +136,7 @@ class FootballProvider(ABC):
         cutoff = datetime.now(timezone.utc) - timedelta(hours=24)
         relevant_matches = [
             match for match in matches
-            if match.status in {"TIMED", "SCHEDULED", "FINISHED", "LIVE", "IN_PLAY"}
+            if match.status in {"TIMED", "SCHEDULED", "FINISHED", "LIVE", "IN_PLAY", "POSTPONED", "CANCELLED", "SUSPENDED"}
             and (match.status != "FINISHED" or match.start_datetime >= cutoff)
         ]
 
@@ -162,7 +163,10 @@ class FootballProvider(ABC):
                 if existing_match.tournament_id in missing_tournament_ids:
                     missing_tournament_ids.remove(existing_match.tournament_id)
                 await self._apply_match_update(db, existing_match, provider_match)
-                if provider_match.home_goals is not None and provider_match.away_goals is not None:
+                if (
+                    provider_match.home_goals is not None
+                    and provider_match.away_goals is not None
+                ) or provider_match.status in {"POSTPONED", "CANCELLED", "SUSPENDED"}:
                     match_ids_to_rescore.append(existing_match.id)
 
             for tournament_id in missing_tournament_ids:
@@ -448,6 +452,7 @@ class FootballProvider(ABC):
         existing_match.external_provider = self.provider_id
         existing_match.external_id = provider_match.external_id
         existing_match.start_datetime = provider_match.start_datetime
+        existing_match.status = provider_match.status
         existing_match.home_goals = provider_match.home_goals
         existing_match.away_goals = provider_match.away_goals
         existing_match.home_team_id = home_team.id if home_team else None
@@ -468,6 +473,7 @@ class FootballProvider(ABC):
                 external_id=provider_match.external_id,
                 tournament_id=tournament_id,
                 start_datetime=provider_match.start_datetime,
+                status=provider_match.status,
                 home_goals=provider_match.home_goals,
                 away_goals=provider_match.away_goals,
                 home_team_id=home_team.id if home_team else None,

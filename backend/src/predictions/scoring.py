@@ -103,11 +103,14 @@ def _compute_match_points(
     """Return points_earned for a single PredictMatch row.
 
     Rules (in priority order):
+    - NULL   if match is postponed, cancelled, or suspended
     - NULL   if match result is not yet known (home_goals or away_goals is NULL)
     - score  = match_score_points  if exact score matches
     - winner = match_winner_points if correct outcome (win/draw) matches
     - 0      otherwise
     """
+    if match.status in {"POSTPONED", "CANCELLED", "SUSPENDED"}:
+        return None
     if match.home_goals is None or match.away_goals is None:
         return None
 

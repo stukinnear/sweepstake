@@ -80,6 +80,7 @@ async def test_create_match(client_user_1: AsyncClient):
     data = resp.json()
     compare_item(MATCH_1_PAYLOAD, data)
     assert "id" in data
+    assert data["status"] == "TIMED"
     assert data["tournament_id"] == tournament_id
     assert data["home_team_id"] == home_team_id
     assert data["away_team_id"] == away_team_id
@@ -88,6 +89,27 @@ async def test_create_match(client_user_1: AsyncClient):
     assert data["away_team"]["id"] == away_team_id
     compare_item(TEAM_HOME_PAYLOAD, data["home_team"])
     compare_item(TEAM_AWAY_PAYLOAD, data["away_team"])
+
+
+@pytest.mark.asyncio
+async def test_create_and_update_match_status(client_user_1: AsyncClient):
+    """POST/PATCH /match accepts and returns match status."""
+    tournament_resp = await client_user_1.post("/tournament", json=TOURNAMENT_PAYLOAD)
+    assert tournament_resp.status_code == 201
+    tournament_id = tournament_resp.json()["id"]
+
+    create_resp = await client_user_1.post("/match", json={
+        **MATCH_1_PAYLOAD,
+        "tournament_id": tournament_id,
+        "status": "POSTPONED",
+    })
+    assert create_resp.status_code == 201
+    match_id = create_resp.json()["id"]
+    assert create_resp.json()["status"] == "POSTPONED"
+
+    patch_resp = await client_user_1.patch(f"/match/{match_id}", json={"status": "TIMED"})
+    assert patch_resp.status_code == 200
+    assert patch_resp.json()["status"] == "TIMED"
 
 
 @pytest.mark.asyncio

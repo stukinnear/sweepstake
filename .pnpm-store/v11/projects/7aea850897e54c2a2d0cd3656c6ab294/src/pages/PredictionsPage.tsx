@@ -278,6 +278,15 @@ function TeamSelect({
   )
 }
 
+const inactiveMatchStatuses = new Set(['POSTPONED', 'CANCELLED', 'SUSPENDED'])
+
+function matchStatusLabel(status: string | null | undefined): string | null {
+  if (status === 'POSTPONED') return 'Postponed'
+  if (status === 'CANCELLED') return 'Cancelled'
+  if (status === 'SUSPENDED') return 'Suspended'
+  return null
+}
+
 /** Controlled score input pair that saves on blur */
 function ScoreInput({
   matchId,
@@ -474,7 +483,7 @@ export function PredictionsPage() {
 
   async function handleGenerateRandomScores() {
     const now = new Date()
-    const upcoming = (matches ?? []).filter((m) => new Date(m.start_datetime) > now)
+    const upcoming = (matches ?? []).filter((m) => new Date(m.start_datetime) > now && !inactiveMatchStatuses.has(m.status))
     setIsGeneratingRandom(true)
     try {
       for (const match of upcoming) {
@@ -813,12 +822,14 @@ export function PredictionsPage() {
                 <ul className="grid grid-cols-1 md:grid-cols-[auto_1fr_auto_1fr_auto] gap-x-2 gap-y-2">
                   {stageMatches.map((match) => {
                     const matchStartMs = parseServerDt(match.start_datetime).getTime()
-                    const isLive = matchStartMs <= renderNowMs && renderNowMs <= matchStartMs + 100 * 60 * 1000
+                    const inactiveStatus = inactiveMatchStatuses.has(match.status)
+                    const statusLabel = matchStatusLabel(match.status)
+                    const isLive = !inactiveStatus && matchStartMs <= renderNowMs && renderNowMs <= matchStartMs + 100 * 60 * 1000
                     if (isLive) nowLineInserted = true
-                    const showNow = !nowLineInserted && matchStartMs >= renderNowMs
+                    const showNow = !inactiveStatus && !nowLineInserted && matchStartMs >= renderNowMs
                     if (showNow) nowLineInserted = true
                     // For admin editing another user, never disable match inputs
-                    const matchDisabled = adminEditingOther ? false : matchStartMs <= renderNowMs
+                    const matchDisabled = inactiveStatus || (adminEditingOther ? false : matchStartMs <= renderNowMs)
                     return (
                       <Fragment key={match.id}>
                         {showNow && (
@@ -843,9 +854,10 @@ export function PredictionsPage() {
                           className={[
                             'relative md:col-span-5 grid grid-cols-[1fr_auto_1fr] md:grid-cols-subgrid items-center gap-x-2 gap-y-1 rounded-lg border bg-white dark:bg-gray-800 pl-4 pr-10 md:pr-4 py-3',
                             isLive ? 'animate-live-border' : 'border-gray-200 dark:border-gray-700',
-                            matchStartMs <= renderNowMs ? 'cursor-pointer' : '',
+                            !inactiveStatus && matchStartMs <= renderNowMs ? 'cursor-pointer' : '',
+                            inactiveStatus ? 'opacity-75' : '',
                           ].join(' ')}
-                          onClick={matchStartMs <= renderNowMs ? () => setSearchParams((prev) => {
+                          onClick={!inactiveStatus && matchStartMs <= renderNowMs ? () => setSearchParams((prev) => {
                             const next = new URLSearchParams(prev)
                             next.set('match', String(match.id))
                             return next
@@ -883,15 +895,21 @@ export function PredictionsPage() {
                             )}
                           </div>
                           <div className="row-start-2 col-start-2 md:row-auto md:col-auto flex justify-center items-center" onClick={(e) => e.stopPropagation()}>
-                            <ScoreInput
-                              matchId={match.id}
-                              prediction={predictionMap.get(match.id)}
-                              isOwn={isEditable}
-                              disabled={matchDisabled || isGeneratingRandom}
-                              userId={adminEditingOther ? targetUserId : undefined}
-                              tournamentId={tournamentId}
-                              onBeforeSave={adminEditingOther ? confirmAdminEdit : undefined}
-                            />
+                            {statusLabel ? (
+                              <span className="rounded-full bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-300">
+                                {statusLabel}
+                              </span>
+                            ) : (
+                              <ScoreInput
+                                matchId={match.id}
+                                prediction={predictionMap.get(match.id)}
+                                isOwn={isEditable}
+                                disabled={matchDisabled || isGeneratingRandom}
+                                userId={adminEditingOther ? targetUserId : undefined}
+                                tournamentId={tournamentId}
+                                onBeforeSave={adminEditingOther ? confirmAdminEdit : undefined}
+                              />
+                            )}
                           </div>
                           <div className="row-start-2 col-start-3 md:row-auto md:col-auto flex items-center justify-start gap-2 px-2">
                             {match.away_team?.image_url ? (
@@ -933,6 +951,13 @@ export function PredictionsPage() {
                                     </>
                                   )
                                 }
+                                if (statusLabel) {
+                                  return (
+                                    <span className="hidden md:inline text-xs italic text-amber-600/70 dark:text-amber-300/70 whitespace-nowrap">
+                                      {statusLabel}
+                                    </span>
+                                  )
+                                }
                                 if (isPast && isEditable) {
                                   const hasPrediction = pred?.home_score != null && pred?.away_score != null
                                   if (hasPrediction) {
@@ -957,7 +982,7 @@ export function PredictionsPage() {
                                 ) : null
                               })()}
                             </div>
-                            {matchStartMs <= renderNowMs && (
+                            {!inactiveStatus && matchStartMs <= renderNowMs && (
                               <button
                                 onClick={() =>
                                   setSearchParams((prev) => {
@@ -973,7 +998,7 @@ export function PredictionsPage() {
                               </button>
                             )}
                           </div>
-                          {matchStartMs <= renderNowMs && (
+                          {!inactiveStatus && matchStartMs <= renderNowMs && (
                             <button
                               onClick={() =>
                                 setSearchParams((prev) => {

@@ -145,6 +145,7 @@ export function MatchModal({
   const [stageId, setStageId] = useState(match?.stage_id?.toString() ?? '')
   const [homeGoals, setHomeGoals] = useState(match?.home_goals?.toString() ?? '')
   const [awayGoals, setAwayGoals] = useState(match?.away_goals?.toString() ?? '')
+  const [matchStatus, setMatchStatus] = useState(match?.status ?? 'TIMED')
   const [tvChannel, setTvChannel] = useState(match?.tv_channel ?? '')
   const [error, setError] = useState<string | null>(null)
   const [teamPickerFor, setTeamPickerFor] = useState<'home' | 'away' | null>(null)
@@ -167,6 +168,7 @@ export function MatchModal({
             home_team_id: homeTeamId ? Number(homeTeamId) : undefined,
             away_team_id: awayTeamId ? Number(awayTeamId) : undefined,
             stage_id: showStage && stageId ? Number(stageId) : undefined,
+            status: matchStatus,
             home_goals: homeGoals !== '' ? Number(homeGoals) : null,
             away_goals: awayGoals !== '' ? Number(awayGoals) : null,
             tv_channel: tvChannel || null,
@@ -179,6 +181,7 @@ export function MatchModal({
           home_team_id: homeTeamId ? Number(homeTeamId) : undefined,
           away_team_id: awayTeamId ? Number(awayTeamId) : undefined,
           stage_id: showStage && stageId ? Number(stageId) : undefined,
+          status: matchStatus,
           home_goals: homeGoals !== '' ? Number(homeGoals) : undefined,
           away_goals: awayGoals !== '' ? Number(awayGoals) : undefined,
           tv_channel: tvChannel || undefined,
@@ -300,6 +303,21 @@ export function MatchModal({
               onClose={() => setShowStageManager(false)}
             />
           )}
+          <div>
+            <FieldLabel>Status</FieldLabel>
+            <select
+              value={matchStatus}
+              onChange={(e) => setMatchStatus(e.target.value)}
+              disabled={isLoading}
+              className={fieldClass}
+            >
+              <option value="TIMED">Scheduled</option>
+              <option value="FINISHED">Finished</option>
+              <option value="POSTPONED">Postponed</option>
+              <option value="CANCELLED">Cancelled</option>
+              <option value="SUSPENDED">Suspended</option>
+            </select>
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <FieldLabel>Home goals</FieldLabel>

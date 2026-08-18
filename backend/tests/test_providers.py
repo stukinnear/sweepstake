@@ -147,7 +147,7 @@ async def test_import_thesportsdb_provider_normalizes_scottish_premiership(clien
                         "strLeague": "Scottish Premiership",
                         "strSeason": "2026-2027",
                         "strTimestamp": "2026-08-09T14:00:00+00:00",
-                        "strStatus": "NS",
+                        "strStatus": "Postponed",
                         "intRound": "2",
                         "idHomeTeam": "205",
                         "idAwayTeam": "202",
@@ -245,6 +245,7 @@ async def test_import_thesportsdb_provider_normalizes_scottish_premiership(clien
     assert matches[3]["external_id"] == "9004"
     assert matches[3]["home_team"]["name"] == "Aberdeen"
     assert matches[3]["away_team"]["name"] == "Hibernian"
+    assert matches[3]["status"] == "POSTPONED"
 
 
 async def test_provider_diagnostics_reports_counts_and_warnings(client_user_1: AsyncClient):

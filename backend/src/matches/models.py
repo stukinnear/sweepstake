@@ -20,6 +20,7 @@ class MatchBase(SQLModel):
     start_datetime: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
     home_goals: Optional[int] = Field(default=None, ge=0)
     away_goals: Optional[int] = Field(default=None, ge=0)
+    status: str = Field(default="TIMED", max_length=32)
     external_provider: Optional[str] = Field(default=None, max_length=64)
     external_id: Optional[str] = Field(default=None, max_length=128)
     football_data_org_id: Optional[int] = Field(default=None)
@@ -48,6 +49,7 @@ class Match(MatchBase, table=True):
     )
     external_provider: Optional[str] = Field(default=None, sa_column=sa.Column(sa.String(64), nullable=True, index=True))
     external_id: Optional[str] = Field(default=None, sa_column=sa.Column(sa.String(128), nullable=True, index=True))
+    status: str = Field(default="TIMED", sa_column=sa.Column(sa.String(32), nullable=False, default="TIMED", server_default="TIMED"))
     # Legacy column retained so existing installs do not drop provider IDs during startup auto-migration.
     football_data_org_id: Optional[int] = Field(default=None)
 

@@ -47,6 +47,15 @@ function TeamBadge({ name, imageUrl }: { name: string | null | undefined; imageU
   )
 }
 
+const inactiveMatchStatuses = new Set(['POSTPONED', 'CANCELLED', 'SUSPENDED'])
+
+function matchStatusLabel(status: string | null | undefined): string | null {
+  if (status === 'POSTPONED') return 'Postponed'
+  if (status === 'CANCELLED') return 'Cancelled'
+  if (status === 'SUSPENDED') return 'Suspended'
+  return null
+}
+
 export function TournamentPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -354,10 +363,12 @@ export function TournamentPage() {
                   const homeGoals = match.home_goals
                   const awayGoals = match.away_goals
                   const hasScore = homeGoals != null && awayGoals != null
+                  const inactiveStatus = inactiveMatchStatuses.has(match.status)
+                  const statusLabel = matchStatusLabel(match.status)
                   const matchStartMs = new Date(match.start_datetime).getTime()
-                  const isLive = matchStartMs <= nowMs && nowMs <= matchStartMs + 100 * 60 * 1000
+                  const isLive = !inactiveStatus && matchStartMs <= nowMs && nowMs <= matchStartMs + 100 * 60 * 1000
                   if (isLive) nowLineInserted = true
-                  const showNow = !nowLineInserted && matchStartMs >= nowMs
+                  const showNow = !inactiveStatus && !nowLineInserted && matchStartMs >= nowMs
                   if (showNow) nowLineInserted = true
                   return (
                     <Fragment key={match.id}>
@@ -383,6 +394,7 @@ export function TournamentPage() {
                       className={[
                         'grid grid-cols-[1fr_auto_1fr] sm:grid-cols-[auto_1fr_auto_1fr_auto] items-center gap-x-2 gap-y-1 sm:gap-2 rounded-lg border bg-white dark:bg-gray-800 px-4 py-3',
                         isLive ? 'animate-live-border' : 'border-gray-200 dark:border-gray-700',
+                        inactiveStatus ? 'opacity-75' : '',
                       ].join(' ')}
                     >
                       {/* Date / time — row 1 left on mobile, col 1 on desktop */}
@@ -424,7 +436,11 @@ export function TournamentPage() {
 
                       {/* Score — row 2 center on mobile, col 3 on desktop */}
                       <span className="row-start-2 col-start-2 sm:row-auto sm:col-auto min-w-[48px] text-center text-sm font-mono font-semibold text-gray-700 dark:text-gray-300">
-                        {hasScore ? `${homeGoals} – ${awayGoals}` : 'vs'}
+                        {statusLabel ? (
+                          <span className="rounded-full bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-300">
+                            {statusLabel}
+                          </span>
+                        ) : hasScore ? `${homeGoals} – ${awayGoals}` : 'vs'}
                       </span>
 
                       {/* Away team: crest + name — row 2 right on mobile, col 4 on desktop */}
@@ -459,7 +475,7 @@ export function TournamentPage() {
                             <Pencil size={13} />
                           </button>
                         )}
-                        {matchStartMs <= nowMs && (
+                        {!inactiveStatus && matchStartMs <= nowMs && (
                           <button
                             onClick={() =>
                               setSearchParams((prev) => {

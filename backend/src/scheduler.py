@@ -104,6 +104,7 @@ async def _send_upcoming_match_reminders() -> None:
             select(Match)
             .where(Match.start_datetime > now)
             .where(Match.start_datetime <= window_end)
+            .where(Match.status.not_in(["POSTPONED", "CANCELLED", "SUSPENDED"]))
             .options(selectinload(Match.home_team))
             .options(selectinload(Match.away_team))
             .order_by(Match.start_datetime)

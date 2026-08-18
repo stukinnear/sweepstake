@@ -28,6 +28,7 @@ async def create_match_endpoint(
     - **stage_id**: Optional ID of the stage this match belongs to
     - **home_goals**: Home team goals (optional, set after match)
     - **away_goals**: Away team goals (optional, set after match)
+    - **status**: Match status, such as TIMED, FINISHED, POSTPONED, CANCELLED, or SUSPENDED
     - **external_provider**: Optional provider ID for imported matches
     - **external_id**: Optional provider match ID
 
@@ -98,6 +99,7 @@ async def patch_match_endpoint(
     - **stage_id**: Optional ID of the stage this match belongs to
     - **home_goals**: Home team goals
     - **away_goals**: Away team goals
+    - **status**: Match status, such as TIMED, FINISHED, POSTPONED, CANCELLED, or SUSPENDED
     - **external_provider**: Optional provider ID for imported matches
     - **external_id**: Optional provider match ID
 
