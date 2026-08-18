@@ -147,7 +147,7 @@ async def test_import_thesportsdb_provider_normalizes_scottish_premiership(clien
                         "strLeague": "Scottish Premiership",
                         "strSeason": "2026-2027",
                         "strTimestamp": "2026-08-09T14:00:00+00:00",
-                        "strStatus": "Postponed",
+                        "strStatus": "PST",
                         "intRound": "2",
                         "idHomeTeam": "205",
                         "idAwayTeam": "202",

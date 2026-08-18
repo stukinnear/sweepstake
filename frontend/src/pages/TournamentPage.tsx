@@ -47,12 +47,12 @@ function TeamBadge({ name, imageUrl }: { name: string | null | undefined; imageU
   )
 }
 
-const inactiveMatchStatuses = new Set(['POSTPONED', 'CANCELLED', 'SUSPENDED'])
+const inactiveMatchStatuses = new Set(['POSTPONED', 'CANCELLED', 'SUSPENDED', 'PST', 'POST', 'CANC', 'SUSP', 'ABD', 'INT'])
 
 function matchStatusLabel(status: string | null | undefined): string | null {
-  if (status === 'POSTPONED') return 'Postponed'
-  if (status === 'CANCELLED') return 'Cancelled'
-  if (status === 'SUSPENDED') return 'Suspended'
+  if (status === 'POSTPONED' || status === 'PST' || status === 'POST') return 'Postponed'
+  if (status === 'CANCELLED' || status === 'CANC' || status === 'ABD' || status === 'INT') return 'Cancelled'
+  if (status === 'SUSPENDED' || status === 'SUSP') return 'Suspended'
   return null
 }
 

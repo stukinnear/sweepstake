@@ -379,14 +379,16 @@ class TheSportsDBProvider(FootballProvider):
 
     def _status(self, event: dict) -> str:
         status = (event.get("strStatus") or "").upper()
-        if "FINISH" in status:
+        if status in {"FT", "AET", "PEN"} or "FINISH" in status:
             return "FINISHED"
-        if "POSTPON" in status:
+        if status in {"PST", "POST"} or "POSTPON" in status:
             return "POSTPONED"
-        if "CANCEL" in status:
+        if status == "CANC" or "CANCEL" in status:
             return "CANCELLED"
-        if "SUSPEND" in status:
+        if status == "SUSP" or "SUSPEND" in status:
             return "SUSPENDED"
+        if status in {"ABD", "INT"} or "ABANDON" in status or "INTERRUPT" in status:
+            return "CANCELLED"
         if status in {"NS", "NOT STARTED", "SCHEDULED", "MATCH SCHEDULED", "TBD"}:
             return "TIMED"
         if "SCHEDULE" in status or "NOT START" in status:
