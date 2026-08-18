@@ -37,6 +37,7 @@ class TheSportsDBProvider(FootballProvider):
 
     def __init__(self) -> None:
         self._team_cache: dict[str, dict | None] = {}
+        self._league_team_cache: dict[str, list[ProviderTeam]] = {}
 
     @cached(ttl=60 * 60)
     async def list_competitions(self) -> list[ProviderCompetition]:
@@ -73,6 +74,8 @@ class TheSportsDBProvider(FootballProvider):
         return data, [self._normalize_match(event, teams) for event in events if event.get("idEvent")]
 
     async def fetch_teams(self, competition_id: str) -> list[ProviderTeam]:
+        if competition_id in self._league_team_cache:
+            return self._league_team_cache[competition_id]
         data = await self._get_json("lookup_all_teams.php", {"id": competition_id})
         teams = data.get("teams") or []
         if not teams:
@@ -90,6 +93,7 @@ class TheSportsDBProvider(FootballProvider):
             len(provider_teams),
             sum(1 for team in provider_teams if team.image_url),
         )
+        self._league_team_cache[competition_id] = provider_teams
         return provider_teams
 
     def expected_team_names(self, competition_id: str) -> set[str] | None:

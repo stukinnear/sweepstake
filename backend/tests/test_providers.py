@@ -117,11 +117,15 @@ async def test_import_football_data_org_provider_normalizes_data(client_user_1: 
 
 
 async def test_import_thesportsdb_provider_normalizes_scottish_premiership(client_user_1: AsyncClient, monkeypatch):
+    lookup_all_teams_calls = 0
+
     def fake_get(url, params=None, **kwargs):
+        nonlocal lookup_all_teams_calls
         if url.endswith("eventsseason.php"):
             assert params == {"id": "4330", "s": "2026-2027"}
             return FakeResponse(_thesportsdb_events())
         if url.endswith("lookup_all_teams.php"):
+            lookup_all_teams_calls += 1
             assert params == {"id": "4330"}
             return FakeResponse(_thesportsdb_teams())
         if url.endswith("lookupteam.php") and params == {"id": "201"}:
@@ -248,6 +252,7 @@ async def test_import_thesportsdb_provider_normalizes_scottish_premiership(clien
     assert matches[3]["home_team"]["name"] == "Aberdeen"
     assert matches[3]["away_team"]["name"] == "Hibernian"
     assert matches[3]["status"] == "POSTPONED"
+    assert lookup_all_teams_calls == 1
 
 
 def test_thesportsdb_provider_normalizes_short_status_codes():
