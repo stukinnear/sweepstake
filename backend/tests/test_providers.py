@@ -261,6 +261,15 @@ def test_thesportsdb_provider_normalizes_short_status_codes():
     assert provider._status({"strStatus": "FT"}) == "FINISHED"
 
 
+def test_thesportsdb_provider_parses_naive_timestamp_as_utc():
+    provider = TheSportsDBProvider()
+
+    parsed = provider._parse_datetime({"strTimestamp": "2026-08-22T15:00:00"})
+
+    assert parsed.tzinfo is not None
+    assert parsed.isoformat() == "2026-08-22T15:00:00+00:00"
+
+
 async def test_provider_diagnostics_reports_counts_and_warnings(client_user_1: AsyncClient):
     tournament_resp = await client_user_1.post("/tournament", json={"name": "Diagnostics SPFL"})
     tournament_id = tournament_resp.json()["id"]

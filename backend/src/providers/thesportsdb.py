@@ -402,7 +402,8 @@ class TheSportsDBProvider(FootballProvider):
     def _parse_datetime(self, event: dict) -> datetime:
         timestamp = event.get("strTimestamp")
         if timestamp:
-            return datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+            parsed = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+            return parsed if parsed.tzinfo is not None else parsed.replace(tzinfo=timezone.utc)
         date_value = event.get("dateEvent") or "1970-01-01"
         time_value = event.get("strTime") or "00:00:00"
         return datetime.fromisoformat(f"{date_value}T{time_value}").replace(tzinfo=timezone.utc)
